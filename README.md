@@ -2,14 +2,14 @@
 
 Spring Boot 백엔드와 연동되는 커뮤니티 프론트엔드 프로젝트입니다.
 
-## 🚀 기술 스택
+## 기술 스택
 
 - **서버**: Express.js 5.x
 - **템플릿 엔진**: EJS (Embedded JavaScript)
 - **스타일링**: Vanilla CSS (반응형 디자인)
 - **JavaScript**: ES6+ (순수 JavaScript, 프레임워크 사용 안 함)
 
-## 📁 프로젝트 구조
+## 프로젝트 구조
 
 ```
 3-bella-han-comunity-frontend/
@@ -49,7 +49,7 @@ Spring Boot 백엔드와 연동되는 커뮤니티 프론트엔드 프로젝트�
 
 ```
 
-## ✨ 주요 기능
+## 주요 기능
 
 ### 1. 공통 레이아웃 시스템
 - **Header**: 네비게이션 바, 로그인 상태에 따른 메뉴 변경
@@ -73,7 +73,7 @@ Spring Boot 백엔드와 연동되는 커뮤니티 프론트엔드 프로젝트�
 - 모바일, 태블릿, 데스크톱 대응
 - 사이드바 자동 재배치 (모바일에서는 하단으로 이동)
 
-## 🛠️ 설치 및 실행
+## 설치 및 실행
 
 ### 1. 의존성 설치
 
@@ -101,9 +101,7 @@ npm run dev
 npm start
 ```
 
-서버가 실행되면 브라우저에서 `http://localhost:5500`로 접속할 수 있습니다.
-
-## 🏗️ Express 서버 구조
+## Express 서버 구조
 
 ### 미들웨어 구성
 - **helmet**: 보안 헤더 설정
@@ -126,7 +124,7 @@ npm start
 - 쿠키 기반 인증 체크
 - 보호된 라우트 자동 리다이렉션
 
-## 📦 의존성
+## 의존성
 
 ### Production Dependencies
 - `express`: 웹 서버 프레임워크
@@ -137,70 +135,3 @@ npm start
 - `morgan`: 로깅
 - `cookie-parser`: 쿠키 파싱
 - `dotenv`: 환경 변수 관리
-
-### Development Dependencies
-- `nodemon`: 개발 중 자동 재시작
-
-## 🎨 디자인 시스템
-
-### 색상 팔레트
-프로젝트의 색상은 `js/constants.js`에서 중앙 관리됩니다:
-- Primary: `#007bff`
-- Secondary: `#6c757d`
-- Danger: `#dc3545`
-- Success: `#28a745`
-
-### 타이포그래피
-- 기본 폰트: `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto`
-- 반응형 폰트 크기 적용
-
-### 컴포넌트
-- 버튼 (primary, secondary, danger)
-- 폼 요소 (input, textarea, file upload)
-- 카드 (게시글 아이템)
-- 네비게이션 바
-- 사이드바
-
-## 🔧 개발 가이드
-
-### 새 페이지 추가하기
-
-1. `views/` 디렉토리에 EJS 파일 생성
-2. `server.js`에 라우트 추가
-3. 필요한 경우 `js/` 디렉토리에 JavaScript 파일 추가
-
-### 스타일 수정
-- `css/style.css`에서 전역 스타일 관리
-- 반응형 디자인을 위한 미디어 쿼리 사용
-
-### API 연동
-- `js/api.js`에서 API 호출 함수 정의
-- `js/constants.js`에서 API URL 관리
-
-## 📝 커밋 규칙
-
-- `feat`: 새로운 기능 추가
-- `fix`: 버그 수정
-- `style`: 코드 포맷팅, 세미콜론 누락 등
-- `refactor`: 코드 리팩토링
-- `docs`: 문서 수정
-- `chore`: 빌드 업무, 패키지 매니저 수정 등
-
-## 🚀 배포
-
-### 프로덕션 빌드
-```bash
-NODE_ENV=production npm start
-```
-
-### 환경 변수 설정
-프로덕션 환경에서는 반드시 `.env` 파일을 설정하고, 시크릿 키를 변경하세요.
-
-## 📄 라이선스
-
-ISC
-
-## 👥 기여자
-
-- Bella Han ([@cozyrim](https://github.com/cozyrim))
-
