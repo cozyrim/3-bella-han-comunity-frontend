@@ -113,3 +113,76 @@ function setQueryParam(param, value) {
     url.searchParams.set(param, value);
     window.history.pushState({}, '', url);
 }
+
+// 이메일 유효성 검사
+function validateEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+// 비밀번호 유효성 검사
+function validatePassword(password) {
+    const minLength = 4;  // 최소 길이를 4자로 완화
+    const maxLength = 20;
+    
+    if (password.length < minLength) {
+        return { valid: false, message: '비밀번호는 4자 이상이어야 합니다.' };
+    }
+    
+    if (password.length > maxLength) {
+        return { valid: false, message: '비밀번호는 20자 이하여야 합니다.' };
+    }
+    
+    // 기본적인 비밀번호 검사 (너무 엄격하지 않게)
+    if (password.length < 6) {
+        return { valid: false, message: '비밀번호는 최소 6자 이상이어야 합니다.' };
+    }
+    
+    return { valid: true };
+}
+
+// 닉네임 유효성 검사
+function validateNickname(nickname) {
+    if (nickname.length < 2) {
+        return { valid: false, message: '닉네임은 2자 이상이어야 합니다.' };
+    }
+    
+    if (nickname.length > 10) {
+        return { valid: false, message: '닉네임은 10자 이하여야 합니다.' };
+    }
+    
+    if (nickname.includes(' ')) {
+        return { valid: false, message: '띄어쓰기는 사용할 수 없습니다.' };
+    }
+    
+    return { valid: true };
+}
+
+// 비밀번호 확인 검사
+function validatePasswordConfirm(password, passwordConfirm) {
+    if (password !== passwordConfirm) {
+        return { valid: false, message: '비밀번호가 일치하지 않습니다.' };
+    }
+    
+    return { valid: true };
+}
+
+// 폼 그룹 상태 업데이트
+function updateFormGroupState(elementId, isValid, message) {
+    const formGroup = document.getElementById(elementId).closest('.form-group');
+    const helperElement = document.getElementById(elementId.replace('signup', '').replace('Confirm', 'Confirm') + 'Helper');
+    
+    if (formGroup) {
+        formGroup.classList.remove('error', 'success');
+        
+        if (isValid === false) {
+            formGroup.classList.add('error');
+        } else if (isValid === true) {
+            formGroup.classList.add('success');
+        }
+    }
+    
+    if (helperElement && message) {
+        helperElement.textContent = message;
+    }
+}

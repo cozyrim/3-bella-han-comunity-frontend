@@ -18,12 +18,12 @@ async function checkAuthForPasswordChange() {
         
         if (!response.ok) {
             showAlert('로그인이 필요합니다.', 'error');
-            location.href = 'login.html';
+            location.href = '/login';
         }
     } catch (error) {
         console.error('인증 확인 오류:', error);
         showAlert('인증 확인 중 오류가 발생했습니다.', 'error');
-        location.href = 'login.html';
+        location.href = '/login';
     }
 }
 

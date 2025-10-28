@@ -1,0 +1,27 @@
+<!-- 게시글 수정 페이지 -->
+<div class="post-form-container">
+    <h2>게시글 수정</h2>
+    <form id="editPostForm" class="post-form">
+        <div class="form-group">
+            <label for="editPostTitle">제목</label>
+            <input type="text" id="editPostTitle" name="title" required>
+        </div>
+        <div class="form-group">
+            <label for="editPostContent">내용</label>
+            <textarea id="editPostContent" name="content" rows="10" required></textarea>
+        </div>
+        <div class="form-group">
+            <label>기존 이미지</label>
+            <div id="existingImages" class="existing-images"></div>
+        </div>
+        <div class="form-group">
+            <label for="editPostImages">새 이미지 추가</label>
+            <input type="file" id="editPostImages" name="newImages" multiple accept="image/*">
+        </div>
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="goBackToDetail()">취소</button>
+            <button type="submit" class="btn btn-primary">수정</button>
+        </div>
+    </form>
+</div>
+

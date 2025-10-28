@@ -1,0 +1,18 @@
+<!-- 헤더: 네비게이션 바 -->
+<header>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-title">
+                <a href="/">아무 말 대잔치</a>
+            </h1>
+            <div class="nav-menu" id="navMenu">
+                <a href="/" class="nav-link <%= typeof currentPath !== 'undefined' && currentPath === '/' ? 'active' : '' %>">홈</a>
+                <a href="/login" class="nav-link" id="loginLink" style="<%= typeof isLoggedIn !== 'undefined' && isLoggedIn ? 'display: none;' : '' %>">로그인</a>
+                <a href="/signup" class="nav-link" id="signupLink" style="<%= typeof isLoggedIn !== 'undefined' && isLoggedIn ? 'display: none;' : '' %>">회원가입</a>
+                <a href="/profile" class="nav-link" id="profileLink" style="<%= typeof isLoggedIn !== 'undefined' && isLoggedIn ? '' : 'display: none;' %>">내 정보</a>
+                <a href="#" onclick="logout()" class="nav-link" id="logoutLink" style="<%= typeof isLoggedIn !== 'undefined' && isLoggedIn ? '' : 'display: none;' %>">로그아웃</a>
+            </div>
+        </div>
+    </nav>
+</header>
+

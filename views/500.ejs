@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - 서버 오류</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .error-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+        .error-code {
+            font-size: 8rem;
+            font-weight: bold;
+            color: #dc3545;
+            margin: 0;
+            line-height: 1;
+        }
+        .error-title {
+            font-size: 2rem;
+            color: #333;
+            margin: 20px 0 10px;
+        }
+        .error-description {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .error-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .error-details {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            max-width: 600px;
+            text-align: left;
+            overflow-x: auto;
+        }
+        .error-details pre {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1 class="error-code">500</h1>
+        <h2 class="error-title">서버 오류가 발생했습니다</h2>
+        <p class="error-description">
+            죄송합니다. 서버에서 일시적인 오류가 발생했습니다.<br>
+            잠시 후 다시 시도해주세요.
+        </p>
+        <div class="error-actions">
+            <a href="/" class="btn btn-primary">홈으로 이동</a>
+            <button class="btn btn-secondary" onclick="location.reload()">페이지 새로고침</button>
+        </div>
+        <% if (typeof error !== 'undefined' && error.stack) { %>
+        <div class="error-details">
+            <h3>상세 오류 정보 (개발 모드)</h3>
+            <pre><%= error.stack %></pre>
+        </div>
+        <% } %>
+    </div>
+</body>
+</html>
+

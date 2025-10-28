@@ -61,7 +61,7 @@ async function handleCreatePost(e) {
         if (result.success) {
             showAlert('게시글이 작성되었습니다.', 'success');
             setTimeout(() => {
-                window.location.href = '/pages/index.html';
+                window.location.href = '/';
             }, 500);
         } else {
             showAlert(result.message || '게시글 작성에 실패했습니다.', 'error');

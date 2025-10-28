@@ -1,0 +1,24 @@
+<!-- 게시글 작성 페이지 -->
+<div class="post-form-container">
+    <h2>게시글 작성</h2>
+    <form id="createPostForm" class="post-form">
+        <div class="form-group">
+            <label for="postTitle">제목</label>
+            <input type="text" id="postTitle" name="title" required>
+        </div>
+        <div class="form-group">
+            <label for="postContent">내용</label>
+            <textarea id="postContent" name="content" rows="10" required></textarea>
+        </div>
+        <div class="form-group">
+            <label for="postImages">이미지 (선택사항)</label>
+            <input type="file" id="postImages" name="images" multiple accept="image/*">
+            <div id="imagePreview" class="image-preview" style="margin-top: 10px;"></div>
+        </div>
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="location.href='/'">취소</button>
+            <button type="submit" class="btn btn-primary">작성</button>
+        </div>
+    </form>
+</div>
+

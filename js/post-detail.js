@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!postId) {
         showAlert('잘못된 접근입니다.', 'error');
         setTimeout(() => {
-            window.location.href = 'index.html';
+            window.location.href = '/';
         }, 1000);
         return;
     }
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const editBtn = document.getElementById('editBtn');
     if (editBtn) {
         editBtn.addEventListener('click', () => {
-            window.location.href = `edit-post.html?id=${postId}`;
+            window.location.href = `/edit-post?id=${postId}`;
         });
     }
     
@@ -56,14 +56,14 @@ async function loadPost(postId) {
         } else {
             showAlert(result.message || '게시글을 불러올 수 없습니다.', 'error');
             setTimeout(() => {
-                window.location.href = 'index.html';
+                window.location.href = '/';
             }, 1000);
         }
     } catch (error) {
         console.error('게시글 로드 오류:', error);
         showAlert('게시글을 불러오는 중 오류가 발생했습니다.', 'error');
         setTimeout(() => {
-            window.location.href = 'index.html';
+            window.location.href = '/';
         }, 1000);
     }
 }
@@ -283,7 +283,7 @@ async function handleDeletePost(postId) {
         if (result.success) {
             showAlert('게시글이 삭제되었습니다.', 'success');
             setTimeout(() => {
-                window.location.href = 'index.html';
+                window.location.href = '/';
             }, 500);
         } else {
             showAlert(result.message || '게시글 삭제에 실패했습니다.', 'error');
@@ -296,5 +296,5 @@ async function handleDeletePost(postId) {
 
 // 목록으로 돌아가기
 function goBack() {
-    window.location.href = 'index.html';
+    window.location.href = '/';
 }

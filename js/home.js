@@ -3,23 +3,44 @@ let posts = [];
 let nextCursor = null;
 let hasNext = false;
 let isLoading = false;
+let scrollTimeout;
 
 // 페이지 초기화
 document.addEventListener('DOMContentLoaded', function() {
     loadPosts();
     
-    const loadMoreBtn = document.getElementById('loadMoreBtn');
-    if (loadMoreBtn) {
-        loadMoreBtn.addEventListener('click', loadMorePosts);
-    }
+    // 스크롤 이벤트 리스너 추가
+    window.addEventListener('scroll', handleScroll);
 });
+
+// 스크롤 이벤트 핸들러
+function handleScroll() {
+    // 스로틀링: 200ms마다 한 번만 실행
+    if (scrollTimeout) return;
+    
+    scrollTimeout = setTimeout(() => {
+        scrollTimeout = null;
+        
+        // 이미 로딩 중이거나 더 이상 데이터가 없으면 중단
+        if (isLoading || !hasNext) return;
+        
+        // 스크롤 위치 계산
+        const scrollTop = window.scrollY || document.documentElement.scrollTop;
+        const clientHeight = window.innerHeight || document.documentElement.clientHeight;
+        const scrollHeight = document.documentElement.scrollHeight;
+        
+        // 하단 200px 전에 도달했는지 확인
+        if (scrollTop + clientHeight >= scrollHeight - 200) {
+            loadMorePosts();
+        }
+    }, 200);
+}
 
 // 게시글 목록 로드
 async function loadPosts() {
     if (isLoading) return;
     
     isLoading = true;
-    showLoading();
     
     try {
         const result = await postAPI.getPosts(5);
@@ -30,7 +51,6 @@ async function loadPosts() {
             nextCursor = result.data.nextCursor || null;
             
             renderPosts();
-            updateLoadMoreButton();
         } else {
             showAlert(result.message || '게시글을 불러오는데 실패했습니다.', 'error');
         }
@@ -39,30 +59,26 @@ async function loadPosts() {
         showAlert('게시글을 불러오는 중 오류가 발생했습니다.', 'error');
     } finally {
         isLoading = false;
-        hideLoading();
     }
 }
 
-// 더 보기
+// 더 보기 (무한 스크롤)
 async function loadMorePosts() {
     if (isLoading || !hasNext) return;
     
     isLoading = true;
-    const loadMoreBtn = document.getElementById('loadMoreBtn');
-    const originalText = loadMoreBtn.textContent;
-    loadMoreBtn.textContent = '로딩 중...';
-    loadMoreBtn.disabled = true;
     
     try {
         const result = await postAPI.getPosts(5, nextCursor);
         
         if (result.success) {
-            posts = [...posts, ...(result.data.items || [])];
+            const newPosts = result.data.items || [];
+            posts = [...posts, ...newPosts];
             hasNext = result.data.hasNext || false;
             nextCursor = result.data.nextCursor || null;
             
-            renderPosts();
-            updateLoadMoreButton();
+            // 새 게시글만 추가 (기존 게시글은 그대로!)
+            appendNewPosts(newPosts);
         } else {
             showAlert(result.message || '게시글을 불러오는데 실패했습니다.', 'error');
         }
@@ -71,12 +87,10 @@ async function loadMorePosts() {
         showAlert('게시글을 불러오는 중 오류가 발생했습니다.', 'error');
     } finally {
         isLoading = false;
-        loadMoreBtn.textContent = originalText;
-        loadMoreBtn.disabled = false;
     }
 }
 
-// 게시글 렌더링
+// 게시글 렌더링 (초기 로드용)
 function renderPosts() {
     const postList = document.getElementById('postList');
     if (!postList) return;
@@ -94,11 +108,22 @@ function renderPosts() {
     });
 }
 
+// 새 게시글만 추가 (무한 스크롤용)
+function appendNewPosts(newPosts) {
+    const postList = document.getElementById('postList');
+    if (!postList) return;
+    
+    newPosts.forEach(post => {
+        const postElement = createPostElement(post);
+        postList.appendChild(postElement);
+    });
+}
+
 // 게시글 요소 생성
 function createPostElement(post) {
     const postDiv = document.createElement('div');
     postDiv.className = 'post-item';
-    postDiv.onclick = () => window.location.href = `/pages/post-detail.html?id=${post.postId}`;
+    postDiv.onclick = () => window.location.href = `/post-detail?id=${post.postId}`;
     
     const date = formatDateSimple(post.createdAt);
     const title = escapeHtml(post.title);
@@ -124,21 +149,4 @@ function createPostElement(post) {
     return postDiv;
 }
 
-// 더 보기 버튼 업데이트
-function updateLoadMoreButton() {
-    const loadMoreBtn = document.getElementById('loadMoreBtn');
-    if (loadMoreBtn) {
-        loadMoreBtn.style.display = hasNext ? 'block' : 'none';
-    }
-}
 
-// 로딩 표시
-function showLoading() {
-    const loading = document.getElementById('loading');
-    if (loading) loading.style.display = 'block';
-}
-
-function hideLoading() {
-    const loading = document.getElementById('loading');
-    if (loading) loading.style.display = 'none';
-}

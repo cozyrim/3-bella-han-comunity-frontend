@@ -1,0 +1,20 @@
+<!-- 프로필 페이지 - 내 정보 -->
+<div class="profile-container">
+    <h2>내 정보</h2>
+    <div class="profile-info">
+        <p id="userId" style="color: #666; margin-bottom: 20px;"></p>
+        <div class="form-group">
+            <label>이메일</label>
+            <input type="email" id="profileEmail" readonly>
+        </div>
+        <div class="form-group">
+            <label>닉네임</label>
+            <input type="text" id="profileNickname">
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" onclick="updateProfile()">정보 수정</button>
+            <button class="btn btn-secondary" onclick="location.href='/change-password'">비밀번호 변경</button>
+        </div>
+    </div>
+</div>
+

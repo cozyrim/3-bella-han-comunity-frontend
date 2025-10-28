@@ -1,0 +1,9 @@
+<!-- 홈 페이지 - 게시글 목록 -->
+<div class="page-header" style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+    <button class="btn btn-primary" onclick="location.href='/create-post'" id="createPostBtn" style="<%= isLoggedIn ? '' : 'display: none;' %>">글쓰기</button>
+</div>
+
+<div id="postList" class="post-list">
+    <!-- 게시글 목록이 여기에 동적으로 추가됩니다 -->
+</div>
+

@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!postId) {
         showAlert('잘못된 접근입니다.', 'error');
         setTimeout(() => {
-            window.location.href = 'index.html';
+            window.location.href = '/';
         }, 1000);
         return;
     }
@@ -41,7 +41,7 @@ async function loadPostForEdit(postId) {
             if (!currentUser || currentPost.authorId !== currentUser.userId) {
                 showAlert('게시글 작성자만 수정할 수 있습니다.', 'error');
                 setTimeout(() => {
-                    window.location.href = `post-detail.html?id=${postId}`;
+                    window.location.href = `/post-detail?id=${postId}`;
                 }, 1000);
                 return;
             }
@@ -55,14 +55,14 @@ async function loadPostForEdit(postId) {
         } else {
             showAlert(result.message || '게시글을 불러올 수 없습니다.', 'error');
             setTimeout(() => {
-                window.location.href = 'index.html';
+                window.location.href = '/';
             }, 1000);
         }
     } catch (error) {
         console.error('게시글 로드 오류:', error);
         showAlert('게시글을 불러오는 중 오류가 발생했습니다.', 'error');
         setTimeout(() => {
-            window.location.href = 'index.html';
+            window.location.href = '/';
         }, 1000);
     }
 }
@@ -237,7 +237,7 @@ async function handleUpdatePost(e, postId) {
         if (result.success) {
             showAlert('게시글이 수정되었습니다.', 'success');
             setTimeout(() => {
-                window.location.href = `post-detail.html?id=${postId}`;
+                window.location.href = `/post-detail?id=${postId}`;
             }, 500);
         } else {
             showAlert(result.message || '게시글 수정에 실패했습니다.', 'error');
@@ -256,8 +256,8 @@ async function handleUpdatePost(e, postId) {
 function goBackToDetail() {
     const postId = getQueryParam('id');
     if (postId) {
-        window.location.href = `post-detail.html?id=${postId}`;
+        window.location.href = `/post-detail?id=${postId}`;
     } else {
-        window.location.href = 'index.html';
+        window.location.href = '/';
     }
 }

@@ -36,7 +36,7 @@ async function loadProfile() {
             sessionStorage.removeItem('currentUser');
             showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'error');
             setTimeout(() => {
-                window.location.href = '/pages/login.html';
+                window.location.href = '/login';
             }, 1000);
         }
     } catch (error) {
@@ -52,7 +52,7 @@ async function updateProfile() {
 
 // 비밀번호 변경
 function goToChangePassword() {
-    window.location.href = '/pages/change-password.html';
+    window.location.href = '/change-password';
 }
 
 // 회원 탈퇴 (백엔드 API 필요)

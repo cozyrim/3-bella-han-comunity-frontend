@@ -78,7 +78,7 @@ async function handleLogout(e) {
         showAlert('로그아웃되었습니다.', 'success');
         
         setTimeout(() => {
-            window.location.href = '/pages/index.html';
+            window.location.href = '/';
         }, 500);
     }
 }
@@ -90,7 +90,7 @@ function requireLogin() {
     if (!userJson) {
         showAlert('로그인이 필요합니다.', 'error');
         setTimeout(() => {
-            window.location.href = '/pages/login.html';
+            window.location.href = '/login';
         }, 1000);
         return false;
     }
