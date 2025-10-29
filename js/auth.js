@@ -1,5 +1,13 @@
-// 로그인 페이지 초기화
+// 인증 페이지 초기화 (로그인 + 회원가입 통합)
 document.addEventListener('DOMContentLoaded', function() {
+    // 이미 로그인 상태면 홈으로 리다이렉트
+    const userJson = sessionStorage.getItem('currentUser');
+    if (userJson) {
+        window.location.href = '/';
+        return;
+    }
+    
+    // 로그인 페이지
     const loginBtn = document.getElementById('loginBtn');
     if (loginBtn) {
         loginBtn.addEventListener('click', handleLogin);
@@ -8,6 +16,21 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('loginPassword')?.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') handleLogin();
         });
+    }
+    
+    // 회원가입 페이지
+    const signupBtn = document.getElementById('signupBtn');
+    if (signupBtn) {
+        signupBtn.addEventListener('click', handleSignup);
+        
+        // 프로필 사진 업로드
+        const profileImageInput = document.getElementById('profileImage');
+        if (profileImageInput) {
+            profileImageInput.addEventListener('change', handleProfileImageChange);
+        }
+        
+        // 실시간 유효성 검사
+        setupRealTimeValidation();
     }
 });
 
@@ -47,7 +70,10 @@ async function handleLogin() {
             showAlert('로그인 성공!', 'success');
 
             setTimeout(() => {
-                window.location.href = '/';
+                // 이전 페이지가 있으면 그곳으로, 없으면 홈으로
+                const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || '/';
+                sessionStorage.removeItem('redirectAfterLogin');
+                window.location.href = redirectUrl;
             }, 500);
         } else {
             showAlert(result.message || '로그인에 실패했습니다.', 'error');
@@ -62,22 +88,6 @@ async function handleLogin() {
     }
 }
 
-// 회원가입 페이지 초기화
-document.addEventListener('DOMContentLoaded', function() {
-    const signupBtn = document.getElementById('signupBtn');
-    if (signupBtn) {
-        signupBtn.addEventListener('click', handleSignup);
-    }
-    
-    // 프로필 사진 업로드 이벤트
-    const profileImageInput = document.getElementById('profileImage');
-    if (profileImageInput) {
-        profileImageInput.addEventListener('change', handleProfileImageChange);
-    }
-    
-    // 실시간 유효성 검사
-    setupRealTimeValidation();
-});
 
 // 프로필 사진 변경 처리
 async function handleProfileImageChange(e) {
@@ -175,12 +185,12 @@ async function validateEmailField() {
     const helper = document.getElementById('emailHelper');
     
     if (!email) {
-        updateFormGroupState('signupEmail', null, '이메일은 영문과 @,. 만 사용이 가능함');
+        updateFormGroupState('signupEmail', null, '이메일을 입력해주세요.');
         return false;
     }
     
-    if (!validateEmail(email)) {
-        updateFormGroupState('signupEmail', false, '*올바른 이메일 주소 형식을 입력해주세요. (예: example@example.com)');
+    if (email.length < 5 || !validateEmail(email)) {
+        updateFormGroupState('signupEmail', false, '올바른 이메일 주소 형식을 입력해주세요.)');
         return false;
     }
     
@@ -262,11 +272,11 @@ async function validateNicknameField() {
     const helper = document.getElementById('nicknameHelper');
     
     if (!nickname) {
-        updateFormGroupState('signupNickname', null, '띄어쓰기불가, 10글자 이내');
+        updateFormGroupState('signupNickname', false, '닉네임을 입력해주세요.');
         return false;
     }
     
-    const validation = validateNickname(nickname);
+   
     if (!validation.valid) {
         updateFormGroupState('signupNickname', false, `*${validation.message}`);
         return false;

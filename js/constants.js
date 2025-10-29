@@ -1,8 +1,8 @@
 // constants.js - 프로젝트 전역 상수 관리
 
-// API 설정
+// API 설정 (Express 프록시 사용)
 const API_CONFIG = {
-    BASE_URL: 'http://localhost:8080/api',
+    BASE_URL: '/api/v1',  // Express 서버의 프록시 경로 사용
     TIMEOUT: 30000,
     RETRY_COUNT: 3
 };

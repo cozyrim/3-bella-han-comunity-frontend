@@ -88,6 +88,9 @@ function requireLogin() {
     const userJson = sessionStorage.getItem('currentUser');
     
     if (!userJson) {
+        // 현재 페이지 저장 (로그인 후 돌아오기 위해)
+        sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+        
         showAlert('로그인이 필요합니다.', 'error');
         setTimeout(() => {
             window.location.href = '/login';

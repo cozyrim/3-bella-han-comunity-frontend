@@ -8,6 +8,8 @@
 html {
     /* 스크롤바 항상 표시 - 레이아웃 시프트 방지 */
     overflow-y: scroll;
+    /* 고정된 전체 너비 */
+    width: 100%;
 }
 
 body {
@@ -15,6 +17,9 @@ body {
     line-height: 1.6;
     color: #333;
     background-color: #f8f9fa;
+    /* 고정된 너비 - 스크롤바로 인한 레이아웃 시프트 방지 */
+    overflow-x: hidden;
+    min-height: 100vh;
 }
 
 /* 네비게이션 */
@@ -65,6 +70,9 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    /* 레이아웃 시프트 방지 */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .page {
@@ -128,6 +136,9 @@ body {
 .post-list {
     display: grid;
     gap: 20px;
+    /* 무한 스크롤 시 레이아웃 시프트 방지 */
+    width: 100%;
+    max-width: 100%;
 }
 
 .post-item {
@@ -137,6 +148,9 @@ body {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     transition: transform 0.2s, box-shadow 0.2s;
     cursor: pointer;
+    /* 너비 고정 - 레이아웃 시프트 방지 */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .post-item:hover {
@@ -174,7 +188,7 @@ body {
 
 .post-item-image {
     width: 100%;
-    height: 200px;
+    height: 300px;
     object-fit: cover;
     border-radius: 4px;
 }

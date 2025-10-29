@@ -1,23 +1,4 @@
-// API 기본 URL
-const API_BASE_URL = 'http://localhost:8080/api/v1';
-
-const CSRF_DEBUG_URL = 'http://localhost:8080/api/v1/debug/csrf';
-
-
-// CSRF 토큰 쿠키에서 읽기
-function getCsrfToken() {
-    const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
-    return match ? decodeURIComponent(match[1]) : null;
-}
-
-async function ensureCsrfCookie() {
-    if (getCsrfToken()) return;
-
-    await fetch(CSRF_DEBUG_URL, {
-    method: 'GET',
-    credentials: 'include', // 쿠키 수신/전송 필수
-  });
-}
+const API_BASE_URL = '/api/v1';
 
 // 공통 API 호출 함수
 async function apiCall(endpoint, options = {}) {
@@ -37,19 +18,6 @@ async function apiCall(endpoint, options = {}) {
     if (!isFormData && body && method.toUpperCase() !== 'GET') {
         headers['Content-Type'] = 'application/json';
     }
-    
-    // POST, PUT, DELETE, PATCH 요청 시 CSRF 토큰 추가
-    const needsCsrf = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method.toUpperCase());
-    if (needsCsrf) {
-        await ensureCsrfCookie();
-        const csrfToken = getCsrfToken();
-        console.log('CSRF 토큰 확인:', csrfToken);
-        if (csrfToken) {
-            headers['X-XSRF-TOKEN'] = csrfToken;
-        } else {
-            console.warn('⚠️ CSRF 토큰이 없습니다!');
-        }
-    }
 
     // 요청 옵션
     const fetchOptions = {
@@ -64,27 +32,11 @@ async function apiCall(endpoint, options = {}) {
     }
 
     try {
-        console.log('=== API 요청 디버깅 ===');
-        console.log('메서드:', method);
-        console.log('엔드포인트:', endpoint);
-        console.log('isFormData:', isFormData);
-        console.log('요청 헤더:', headers);
-        console.log('현재 쿠키:', document.cookie);
-        if (isFormData && body) {
-            console.log('FormData 내용:');
-            for (let pair of body.entries()) {
-                console.log(`  ${pair[0]}:`, pair[1]);
-            }
-        }
-
         const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
         
-        // 응답이 비어있는지 확인
         if (!response) {
             throw new Error('서버로부터 응답을 받지 못했습니다.');
         }
-
-        console.log('응답 상태:', response.status);
 
         // 401 Unauthorized 처리 (세션 만료)
         if (response.status === 401) {
@@ -106,11 +58,8 @@ async function apiCall(endpoint, options = {}) {
         }
 
         // 403 Forbidden 처리
-        if (response.status === 403 && needsCsrf) {
-            console.error('403 오류 - CSRF 토큰 문제 또는 권한 없음');
-            console.log('현재 CSRF 토큰:', getCsrfToken());
+        if (response.status === 403) {
             showAlert('접근 권한이 없습니다.', 'error');
-
             return {
                 success: false,
                 message: '접근 권한이 없습니다.',
@@ -168,31 +117,6 @@ async function apiCall(endpoint, options = {}) {
         };
     } 
 }
-
-
-
-
-    //     // JSON 파싱
-    //     const data = await response.json();
-
-    //     if (response.ok) {
-    //         return {
-    //             success: true,
-    //             data: data.data,
-    //             message: data.message,
-    //             code: data.code
-    //         };
-    //     } else {
-    //         return {
-    //             success: false,
-    //             message: data.message || '요청 처리 중 오류가 발생했습니다.',
-    //             code: data.code,
-    //             status: response.status
-    //         };
-    //     }
-    // } 
-    
-
 
 // 인증 API
 const authAPI = {
