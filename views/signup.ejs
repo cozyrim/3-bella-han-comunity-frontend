@@ -6,7 +6,7 @@
         <div class="form-group profile-upload">
             <label for="profileImage">프로필 사진</label>
             <div class="profile-image-container">
-                <div class="profile-image-preview" id="profileImagePreview">
+                <div class="profile-image-preview" id="profileImagePreview" onclick="document.getElementById('profileImage').click()">
                     <div class="profile-placeholder">
                         <span class="plus-icon">+</span>
                         <p>프로필 사진을 추가해주세요</p>
@@ -48,7 +48,7 @@
             <div class="helper-text" id="nicknameHelper">띄어쓰기불가, 10글자 이내</div>
         </div>
 
-        <button type="button" id="signupBtn" class="btn btn-primary" >회원가입</button>
+        <button type="button" id="signupBtn" class="btn btn-primary" disabled>회원가입</button>
     </form>
     <p class="auth-switch">
         이미 계정이 있으신가요? <a href="/login">로그인</a>

@@ -26,7 +26,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // 프로필 사진 업로드
         const profileImageInput = document.getElementById('profileImage');
         if (profileImageInput) {
+            
             profileImageInput.addEventListener('change', handleProfileImageChange);
+            
+        } else {
+            console.error(' profileImage 요소를 찾을 수 없습니다!');
         }
         
         // 실시간 유효성 검사
@@ -91,7 +95,9 @@ async function handleLogin() {
 
 // 프로필 사진 변경 처리
 async function handleProfileImageChange(e) {
+    
     const file = e.target.files[0];
+    
     const preview = document.getElementById('profileImagePreview');
     const helper = document.getElementById('profileHelper');
     
@@ -118,11 +124,14 @@ async function handleProfileImageChange(e) {
     
     try {
         // 이미지 미리보기 생성
+        
         const previewUrl = await createImagePreview(file);
+        
         
         preview.innerHTML = `
             <img src="${previewUrl}" alt="프로필 미리보기">
         `;
+        
         
         helper.textContent = '프로필 사진이 선택되었습니다.';
         helper.style.color = '#28a745';
@@ -130,7 +139,7 @@ async function handleProfileImageChange(e) {
         // 폼 유효성 검사 업데이트
         checkFormValidity();
     } catch (error) {
-        console.error('이미지 미리보기 오류:', error);
+        console.error(' 이미지 미리보기 오류:', error);
         showAlert('이미지 미리보기를 생성할 수 없습니다.', 'error');
     }
 }
@@ -190,7 +199,7 @@ async function validateEmailField() {
     }
     
     if (email.length < 5 || !validateEmail(email)) {
-        updateFormGroupState('signupEmail', false, '올바른 이메일 주소 형식을 입력해주세요.)');
+        updateFormGroupState('signupEmail', false, '올바른 이메일 주소 형식을 입력해주세요. (예: example@example.com)');
         return false;
     }
     
@@ -272,11 +281,12 @@ async function validateNicknameField() {
     const helper = document.getElementById('nicknameHelper');
     
     if (!nickname) {
-        updateFormGroupState('signupNickname', false, '닉네임을 입력해주세요.');
+        updateFormGroupState('signupNickname', null, '닉네임을 입력해주세요.');
         return false;
     }
     
-   
+    // 닉네임 형식 검사
+    const validation = validateNickname(nickname);
     if (!validation.valid) {
         updateFormGroupState('signupNickname', false, `*${validation.message}`);
         return false;

@@ -169,8 +169,19 @@ function validatePasswordConfirm(password, passwordConfirm) {
 
 // 폼 그룹 상태 업데이트
 function updateFormGroupState(elementId, isValid, message) {
-    const formGroup = document.getElementById(elementId).closest('.form-group');
-    const helperElement = document.getElementById(elementId.replace('signup', '').replace('Confirm', 'Confirm') + 'Helper');
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const formGroup = element.closest('.form-group');
+    
+    // helper 요소 ID 계산
+    // signupEmail -> emailHelper
+    // signupPassword -> passwordHelper
+    // signupPasswordConfirm -> passwordConfirmHelper
+    // signupNickname -> nicknameHelper
+    const helperElementId = elementId.replace('signup', '').charAt(0).toLowerCase() + 
+                           elementId.replace('signup', '').slice(1) + 'Helper';
+    const helperElement = document.getElementById(helperElementId);
     
     if (formGroup) {
         formGroup.classList.remove('error', 'success');
