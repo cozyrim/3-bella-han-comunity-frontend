@@ -124,39 +124,55 @@ function createPostElement(post) {
     const postDiv = document.createElement('div');
     postDiv.className = 'post-item';
     postDiv.onclick = () => window.location.href = `/post-detail?id=${post.postId}`;
-    
+
     const date = formatDateSimple(post.createdAt);
-    const title = escapeHtml(post.title);
-    const content = escapeHtml(post.content);
-    
-    // 내용 한 줄 미리보기 (50자 제한)
+    const title = escapeHtml(post.title ?? '');
+    const content = escapeHtml(post.content ?? '');
     const contentPreview = content.length > 50 ? content.substring(0, 50) + '...' : content;
-    
-    // 작성자 닉네임만 표시 (없으면 표시 안 함)
     const authorDisplay = post.authorNickname ? escapeHtml(post.authorNickname) : '';
+
+    const views = (typeof post.viewCount === 'number') ? post.viewCount : Number(post.viewCount ?? 0);
+    const likesCount = (typeof post.likesCount === 'number') ? post.likesCount : Number(post.likesCount ?? 0);
+
+postDiv.innerHTML = `
+  <div class="post-item-header">
+    <h3 class="post-item-title" style="font-size: 18px; margin: 0 0 10px 0;">${title}</h3>
+  </div>
+  <div class="post-item-content" style="color: #666; margin-bottom: 10px;">${contentPreview}</div>
+  
+  <div class="post-item-meta" 
+       style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #999;">
+       
+    <span class="post-meta-left">
+      ${authorDisplay ? `${authorDisplay} | ` : ''}${date}
+    </span>
     
-    const views = (typeof post.viewCount === 'number') ? post.viewCount : (post.viewCount ?? 0);
+    <!-- 오른쪽: 개별 배지 2개 -->
+    <span class="post-meta-right" style="display:flex;align-items:center;gap:8px;">
+      <!-- 좋아요 배지 -->
+      <span class="meta-badge like" 
+            style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;
+                   border-radius:999px;background:#fff0f3;border:1px solid #ffd6de;">
+        <i class="fa fa-heart" aria-hidden="true" style="color:#ff4d6d;"></i>
+        <span>❤️</span><strong> ${formatCount(likesCount)}</strong>
+      </span>
 
+      <!-- 조회수 배지 -->
+      <span class="meta-badge views" 
+            style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;
+                   border-radius:999px;background:#f5f7fb;border:1px solid #e3e8f0;">
+        <span>👁️  </span><strong>${views.toLocaleString()}</strong>
+      </span>
+    </span>
+  </div>
 
-    postDiv.innerHTML = `
-        <div class="post-item-header">
-            <h3 class="post-item-title" style="font-size: 18px; margin: 0 0 10px 0;">${title}</h3>
-        </div>
-        <div class="post-item-content" style="color: #666; margin-bottom: 10px;">${contentPreview}</div>
-        
-        <div class="post-item-meta" style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #999;">
-            <span class="post-meta-left">
-                ${authorDisplay ? `${authorDisplay} | ` : ''}${date}
-            </span>
-            <span class="post-meta-right"
-                style="display:inline-flex; align-items:center; gap:6px; background:#f5f7fb; border:1px solid #e3e8f0; padding:2px 8px; border-radius:999px; color:#445;">
-            <span>👁️</span><strong>${views.toLocaleString()}</strong>
-            </span>
-        </div>
+  ${post.primaryImageUrl ? 
+    `<img src="${post.primaryImageUrl}" alt="게시글 이미지" 
+          class="post-item-image" onerror="this.style.display='none'" 
+          style="margin-top: 10px;">` 
+    : ''}
+`;
 
-        ${post.primaryImageUrl ? `<img src="${post.primaryImageUrl}" alt="게시글 이미지" class="post-item-image" onerror="this.style.display='none'" style="margin-top: 10px;">` : ''}
-    `;
-    
     return postDiv;
 }
 

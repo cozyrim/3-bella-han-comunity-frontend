@@ -107,6 +107,77 @@ function renderPost(post) {
         viewsEl.textContent = `👁️${views.toLocaleString()}`;
     }
 
+    // 좋아요
+    const metaRight = document.querySelector('#postDetailMetaArea');
+    if (metaRight && !document.getElementById('likeSection')) {
+        const likeWrap = document.createElement('div');
+        likeWrap.id = 'likeSection';
+        likeWrap.innerHTML = `
+            <button id="likeBtn" type="button" class="like-btn"
+                style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border:1px solid #ffd6de;border-radius:999px;background:#fff0f3;cursor:pointer;">
+                <i class="fa fa-heart" aria-hidden="true" style="color:#ff4d6d;"></i>
+                <span id="likeBtnLabel">좋아요</span>
+                <strong id="likesCount" style="margin-left:4px;">${formatCount(post.likesCount)}</strong>
+                
+            </button>
+            
+        `;
+        metaRight.prepend(likeWrap);
+        
+    // 초기 liked 상태를 서버가 내려주면 반영(없으면 false로)
+    updateLikeButtonUI(!!post.likedByMe);
+    attachLikeHandlers(post.postId);
+}
+
+function updateLikeButtonUI(liked) {
+    const btn = document.getElementById('likeBtn');
+    const label = document.getElementById('likeBtnLabel');
+    if (!btn || !label) return;
+
+    if (liked) {
+        btn.style.background = '#ffe3ea';
+        btn.style.borderColor = '#ffb3c2';
+        label.textContent = '💔';
+        btn.setAttribute('data-liked', 'true');
+    } else {
+        btn.style.background = '#fff0f3';
+        btn.style.borderColor = '#ffd6de';
+        label.textContent = '❤️';
+        btn.setAttribute('data-liked', 'false');
+    }
+}
+function attachLikeHandlers(postId) {
+  const btn = document.getElementById('likeBtn');
+  if (!btn) return;
+
+  btn.addEventListener('click', async () => {
+    const liked = btn.getAttribute('data-liked') === 'true';
+
+    // like/unlike로 분기
+    const res = liked ? await postAPI.unlike(postId) : await postAPI.like(postId);
+
+    if (res?.success) {
+      // 서버가 최신 카운트를 내려주지 않는 케이스 대비
+      const c = document.getElementById('likesCount');
+      const next = (res.data?.likesCount != null)
+        ? Number(res.data.likesCount)
+        : Number(currentPost?.likesCount ?? 0) + (liked ? -1 : 1);
+
+      if (c) c.textContent = formatCount(next);
+      updateLikeButtonUI(!liked);
+      currentPost = { ...currentPost, likedByMe: !liked, likesCount: next };
+    } else if (res?.status === 401) {
+      showAlert('로그인이 필요합니다.', 'error');
+      setTimeout(() => (window.location.href = '/login'), 800);
+    } else {
+      showAlert(res?.message ?? '좋아요 처리 중 오류가 발생했습니다.', 'error');
+    }
+  });
+}
+
+
+
+
     // 이미지 슬라이더 렌더링
     const imagesElement = document.getElementById('postImages');
     if (imagesElement) {
@@ -363,7 +434,7 @@ function buildCommentItemHTML(comment) {
         <div class="comment-body" style="margin-top:6px; font-size:15px; line-height:1.5;">
         ${content}
         </div>
-        <!-- 필요 시 좋아요/수정/삭제 버튼 영역(나중에 조건부 노출) -->
+        
         <!--
         <div class="comment-actions" style="margin-top:8px;">
             <button class="btn btn-xs">좋아요 ${comment.likesCount ?? 0}</button>

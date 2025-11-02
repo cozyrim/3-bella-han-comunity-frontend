@@ -239,6 +239,18 @@ const postAPI = {
         return apiCall(`/posts/${postId}`, {
             method: 'DELETE'
         });
+    },
+
+    like: async (postId) => {
+        return apiCall(`/posts/${postId}/likes`, {
+            method: 'POST'
+        });
+    },
+
+    unlike: async (postId) => {
+        return apiCall(`/posts/${postId}/likes`, {
+            method: 'DELETE'
+        });
     }
 };
 
@@ -251,3 +263,4 @@ const commentsAPI = {
         });
     }
 };
+

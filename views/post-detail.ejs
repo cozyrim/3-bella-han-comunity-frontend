@@ -1,22 +1,36 @@
 <!-- 게시글 상세 페이지 -->
 <div class="post-detail">
-    <div class="post-header">
-        <h2 id="postTitle"></h2>
-        <div class="post-meta">
-            <span id="postAuthor"></span> | 
-            <span id="postDate"></span>
-            <span id="postViews" style="background:#f5f7fb;border:1px solid #e3e8f0;border-radius:12px;padding:3px 8px;font-size:12px;color:#445;">👁️ 0</span>
-        </div>
+  <div class="post-header">
+    <h2 id="postTitle"></h2>
+
+    <div class="post-meta" style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+      <!-- 왼쪽: 작성자/날짜 -->
+      <div class="post-meta-left" style="color:#666;">
+        <span id="postAuthor"></span> | 
+        <span id="postDate"></span>
+      </div>
+
+      <!-- 오른쪽: 조회수 + (JS가 주입할) 좋아요 -->
+      <div class="post-meta-right" id="postDetailMetaArea"
+           style="display:flex;align-items:center;gap:8px;">
+        <span id="postViews"
+              style="background:#f5f7fb;border:1px solid #e3e8f0;border-radius:12px;
+                     padding:3px 8px;font-size:12px;color:#445;">👁️  0 </span>
+        
+      </div>
+    </div> <!-- /post-meta -->
+  </div>   <!-- /post-header -->
+
+  <div id="postImages" class="post-images"></div>
+  <div id="postContent" class="post-content"></div>
+
+  <div class="post-actions">
+    <button class="btn btn-secondary" onclick="goBack()">목록</button>
+    <div id="actionButtons" style="display:none;">
+      <button class="btn btn-primary" id="editBtn">수정</button>
+      <button class="btn btn-danger" id="deleteBtn">삭제</button>
     </div>
-    <div id="postImages" class="post-images"></div>
-    <div id="postContent" class="post-content"></div>
-    <div class="post-actions">
-        <button class="btn btn-secondary" onclick="goBack()">목록</button>
-        <div id="actionButtons" style="display: none;">
-            <button class="btn btn-primary" id="editBtn">수정</button>
-            <button class="btn btn-danger" id="deleteBtn">삭제</button>
-        </div>
-    </div>
+  </div>
 </div>
 
 <!-- 댓글 섹션 추가 -->

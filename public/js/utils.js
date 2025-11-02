@@ -197,3 +197,47 @@ function updateFormGroupState(elementId, isValid, message) {
         helperElement.textContent = message;
     }
 }
+
+function getCookie(name) {
+    const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return v ? v.pop() : '';
+}
+
+function getCsrfHeaders() {
+    const token = getCookie('XSRF-TOKEN');
+    return token ? { 'X-XSRF-TOKEN': token } : {};
+}
+
+function formatCount(n) {
+    const v = Number(n ?? 0);
+    return Number.isFinite(v) ? v.toLocaleString() : '0';
+}
+
+// (선택) 자주 쓰는 유틸도 같이
+function escapeHtml(str = '') {
+    return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+function formatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getQueryParam(key) {
+    return new URLSearchParams(location.search).get(key);
+}
+
+// 전역으로 노출 (모듈 아닌 일반 <script> 환경)
+window.getCookie = getCookie;
+window.getCsrfHeaders = getCsrfHeaders;
+window.formatCount = formatCount;
+window.escapeHtml = escapeHtml;
+window.formatDate = formatDate;
+window.getQueryParam = getQueryParam;

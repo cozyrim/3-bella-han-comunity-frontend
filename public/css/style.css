@@ -884,3 +884,27 @@ body {
     color: #888;
     font-size: 14px;
 }
+
+.post-meta-right{
+    display:flex;
+    align-items:center;
+    gap:8px
+}
+
+.meta-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:2px 8px;
+    border-radius:999px
+}
+
+.meta-badge.like{
+    background:#fff0f3;
+    border:1px solid #ffd6de
+}
+
+.meta-badge.views{
+    background:#f5f7fb;
+    border:1px solid #e3e8f0
+}
