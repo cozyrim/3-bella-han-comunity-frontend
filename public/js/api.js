@@ -241,3 +241,13 @@ const postAPI = {
         });
     }
 };
+
+// 댓글 API
+const commentsAPI = {
+    getComments : async (postId) => {
+        return apiCall(`/posts/${postId}/comments`, {
+            method: 'GET',
+            requiresAuth: false // 현재는 목록 공개, 나중에 잠그면 credentials 로 쿠키도 전송
+        });
+    }
+};

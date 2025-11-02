@@ -135,14 +135,25 @@ function createPostElement(post) {
     // 작성자 닉네임만 표시 (없으면 표시 안 함)
     const authorDisplay = post.authorNickname ? escapeHtml(post.authorNickname) : '';
     
+    const views = (typeof post.viewCount === 'number') ? post.viewCount : (post.viewCount ?? 0);
+
+
     postDiv.innerHTML = `
         <div class="post-item-header">
             <h3 class="post-item-title" style="font-size: 18px; margin: 0 0 10px 0;">${title}</h3>
         </div>
         <div class="post-item-content" style="color: #666; margin-bottom: 10px;">${contentPreview}</div>
-        <div class="post-item-meta" style="font-size: 14px; color: #999;">
-            ${authorDisplay ? `${authorDisplay} | ` : ''}${date}
+        
+        <div class="post-item-meta" style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #999;">
+            <span class="post-meta-left">
+                ${authorDisplay ? `${authorDisplay} | ` : ''}${date}
+            </span>
+            <span class="post-meta-right"
+                style="display:inline-flex; align-items:center; gap:6px; background:#f5f7fb; border:1px solid #e3e8f0; padding:2px 8px; border-radius:999px; color:#445;">
+            <span>👁️</span><strong>${views.toLocaleString()}</strong>
+            </span>
         </div>
+
         ${post.primaryImageUrl ? `<img src="${post.primaryImageUrl}" alt="게시글 이미지" class="post-item-image" onerror="this.style.display='none'" style="margin-top: 10px;">` : ''}
     `;
     

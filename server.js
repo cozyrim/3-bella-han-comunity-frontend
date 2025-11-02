@@ -25,25 +25,40 @@ app.use(morgan('dev'));
 // 쿠키 파서
 app.use(cookieParser());
 
+// ✅ 무조건 찍히는 사전 로깅 (프록시 앞)
+app.use('/api', (req, res, next) => {
+    console.log('[API-IN]', req.method, req.originalUrl);
+    next();
+});
+
 // API 프록시: /api -> 백엔드 (8080)
 // 주의: body parser 전에 등록해야 POST body를 백엔드로 전달 가능
 app.use('/api', createProxyMiddleware({
-    target: 'http://127.0.0.1:8080',
+    target: 'http://localhost:8080',
     changeOrigin: true,
+    xfwd: true, 
     timeout: 60000,
     proxyTimeout: 60000,
-    pathRewrite: (path) => path.startsWith('/api/') ? path : '/api' + path,
+    // pathRewrite: (path) => path.startsWith('/api/') ? path : '/api' + path,
+    pathRewrite: (path) => '/api' + path, 
     cookieDomainRewrite: 'localhost',
     cookiePathRewrite: '/',
-    onError: (err, req, res) => {
-        console.error(`[프록시 에러] ${req.method} ${req.path} - ${err.message}`);
-        res.status(500).json({ error: '백엔드 서버 오류', message: err.message });
+    logLevel: 'debug',                    // ✅ 추가
+    onProxyReq(proxyReq, req) {
+    console.log('[PROXY→]', req.method, req.originalUrl);
+    },
+    onProxyRes(proxyRes, req) {
+    console.log('[PROXY←]', req.method, req.originalUrl, '→', proxyRes.statusCode);
+    },
+    onError(err, req, res) {
+    console.error('[PROXY ERR]', req.method, req.originalUrl, '-', err.message);
+    res.status(500).json({ success:false, code:'E500', message: '프록시 에러', detail: err.message });
     }
 }));
 
 // 파일 프록시
 app.use('/files', createProxyMiddleware({
-    target: 'http://127.0.0.1:8080',
+    target: 'http://localhost:8080',
     changeOrigin: true,
     timeout: 60000
 }));

@@ -171,7 +171,9 @@ function updateSignupButton() {
     signupBtn.disabled = !enable;
     signupBtn.style.backgroundColor = enable ? '#7F6AEE' : '#ACADEB';
 }
-kk
+
+
+
 
 // 실시간 유효성 검사 설정 - 이벤트 연결
 function setupRealTimeValidation() {
@@ -220,43 +222,54 @@ async function validateEmailField() {
     
     if (!email) {
         updateFormGroupState('signupEmail', null, '이메일을 입력해주세요.');
-        
+        _emailValid = false;
+        checkFormValidity();
         return false;
     }
     
     if (email.length < 5 || !validateEmail(email)) {
         updateFormGroupState('signupEmail', false, '올바른 이메일 주소 형식을 입력해주세요. (예: example@example.com)');
-        
+        _emailValid = false;
+        checkFormValidity();
         return false;
     }
     
+
+// 같은 값이면 서버 재요청 스킵
+    if (email === _lastCheckedEmail) {
+        checkFormValidity();
+        return _emailValid;
+    }
+    // 요청 순번
+    const mySeq = ++_emailReqSeq;
+
     // 이메일 중복 검사
     try {
         const result = await userAPI.checkEmail(email);
         console.log('이메일 중복 검사 결과:', result);
-        
-        if (result.success) {
-            if (result.data === true) {
-                updateFormGroupState('signupEmail', false, '*중복된 이메일입니다.');
-                
-                return false;
-            } else {
-                updateFormGroupState('signupEmail', true, '사용 가능한 이메일입니다.');
-                
-                return true;
-            }
+        if (mySeq !== _emailReqSeq) return false; // 오래된 응답 버림
+
+
+        if (result.success && result.data === false) {
+            // 사용 가능
+            updateFormGroupState('signupEmail', true, '사용 가능한 이메일입니다.');
+            _emailValid = true;
+            _lastCheckedEmail = email;
+        } else if (result.success && result.data === true) {
+            updateFormGroupState('signupEmail', false, '*중복된 이메일입니다.');
+            _emailValid = false;
+            _lastCheckedEmail = email;
         } else {
-            console.error('이메일 중복 검사 API 오류:', result.message);
             updateFormGroupState('signupEmail', null, '이메일 중복 검사 중 오류가 발생했습니다.');
-            
-            return false;
+            _emailValid = false;
         }
-    } catch (error) {
-        console.error('이메일 중복 검사 오류:', error);
+    } catch (error){
+        console.error('이메일 중복 검사 API 오류:', errorResponsePlugin);
         updateFormGroupState('signupEmail', null, '이메일 중복 검사 중 오류가 발생했습니다.');
-        
-        return false;
+    } finally {
+        checkFormValidity(); // 여기서는 동기판정만 함
     }
+    return _emailValid;
 }
 
 // 비밀번호 유효성 검사
@@ -266,24 +279,26 @@ function validatePasswordField() {
     
     if (!password) {
         updateFormGroupState('signupPassword', null, '비밀번호는 6자 이상, 20자 이하입니다.');
-        
+        _passwordValid = false;
+        checkFormValidity();
         return false;
     }
     
     const validation = validatePassword(password);
     if (!validation.valid) {
         updateFormGroupState('signupPassword', false, `*${validation.message}`);
-        
+        _passwordValid = false;
+        checkFormValidity();
         return false;
     }
     
     updateFormGroupState('signupPassword', true, '올바른 비밀번호 형식입니다.');
-    
+    _passwordValid = true;
     // 비밀번호 확인 필드도 다시 검사
     if (document.getElementById('signupPasswordConfirm').value) {
         validatePasswordConfirmField();
     }
-    
+    checkFormValidity();
     return true;
 }
 
@@ -295,19 +310,22 @@ function validatePasswordConfirmField() {
     
     if (!passwordConfirm) {
         updateFormGroupState('signupPasswordConfirm', null, '비밀번호를 한번더 입력해주세요');
-        
+        _passwordConfirmValid = false;
+        checkFormValidity();
         return false;
     }
     
     const validation = validatePasswordConfirm(password, passwordConfirm);
     if (!validation.valid) {
         updateFormGroupState('signupPasswordConfirm', false, `*${validation.message}`);
-        
+        _passwordConfirmValid = false;
+        checkFormValidity();
         return false;
     }
     
     updateFormGroupState('signupPasswordConfirm', true, '비밀번호가 일치합니다.');
-    
+    _passwordConfirmValid = true;
+    checkFormValidity();
     return true;
 }
 
@@ -318,7 +336,8 @@ async function validateNicknameField() {
     
     if (!nickname) {
         updateFormGroupState('signupNickname', null, '닉네임을 입력해주세요.');
-        
+        _nicknameValid = false;
+        checkFormValidity();
         return false;
     }
     
@@ -326,86 +345,115 @@ async function validateNicknameField() {
     const validation = validateNickname(nickname);
     if (!validation.valid) {
         updateFormGroupState('signupNickname', false, `*${validation.message}`);
-        
+        _nicknameValid = false;
+        checkFormValidity();
         return false;
     }
 
     if (nickname.length > 10) {
         updateFormGroupState('signupNickname', false, '*닉네임은 10자 이하여야 합니다.');
-        
+        _nicknameValid = false;
+        checkFormValidity();
         return false;
     }
-    
+    // 같은 값이면 서버 재요청 스킵
+    if (nickname === _lastCheckedNickname) {
+        checkFormValidity();
+        return _nicknameValid;
+    }
+    const mySeq = ++_nicknameReqSeq;
+
     // 닉네임 중복 검사
     try {
         const result = await userAPI.checkNickname(nickname);
         console.log('닉네임 중복 검사 결과:', result);
-        
-        if (result.success) {
-            if (result.data === true) {
+        if (mySeq !== _nicknameReqSeq) return false; // 오래된 응답 버림
+
+
+        if (result.success && result.data === false) {
+            updateFormGroupState('signupNickname', true, '사용 가능한 닉네임입니다.');
+                _nicknameValid = true;
+                _lastCheckedNickname = nickname;
+            } else if (result.success && result.data === true) {
                 updateFormGroupState('signupNickname', false, '*중복된 닉네임입니다.');
-                
-                return false;
+                _nicknameValid = false;
+                _lastCheckedNickname = nickname;
             } else {
-                updateFormGroupState('signupNickname', true, '사용 가능한 닉네임입니다.');
-                checkFormValidity();
-                return true;
-            }
-        } else {
             console.error('닉네임 중복 검사 API 오류:', result.message);
             updateFormGroupState('signupNickname', null, '닉네임 중복 검사 중 오류가 발생했습니다.');
-            
-            return false;
+            _nicknameValid = false;
         }
     } catch (error) {
         console.error('닉네임 중복 검사 오류:', error);
         updateFormGroupState('signupNickname', null, '닉네임 중복 검사 중 오류가 발생했습니다.');
-        
-        return false;
+        _nicknameValid = false;
+    } finally {
+        checkFormValidity(); // 여기서는 동기판정만 함
     }
+    return _nicknameValid
 }
 
+//동기 판정으로 변경, 캐시된 플래그만 사용
 // 전체 폼 유효성 검사 - 현재 폼이 제출 가능 상태인지 게산해서 가입 버튼 활성/비활성 토글
 async function checkFormValidity() {
-    const emailValid = await validateEmailField();
-    const passwordValid = validatePasswordField();
-    const passwordConfirmValid = validatePasswordConfirmField();
-    const nicknameValid = await validateNicknameField();
+    // const emailValid = await validateEmailField();
+    // const passwordValid = validatePasswordField();
+    // const passwordConfirmValid = validatePasswordConfirmField();
+    // const nicknameValid = await validateNicknameField();
     
-    const signupBtn = document.getElementById('signupBtn');
+    // const signupBtn = document.getElementById('signupBtn');
     
-    if (emailValid && passwordValid && passwordConfirmValid && nicknameValid) {
-        signupBtn.disabled = false;
-        signupBtn.style.backgroundColor = '#7F6AEE';
-    } else {
-        signupBtn.disabled = true;
-        signupBtn.style.backgroundColor = '#ACADEB';
-    }
+    // if (emailValid && passwordValid && passwordConfirmValid && nicknameValid) {
+    //     signupBtn.disabled = false;
+    //     signupBtn.style.backgroundColor = '#7F6AEE';
+    // } else {
+    //     signupBtn.disabled = true;
+    //     signupBtn.style.backgroundColor = '#ACADEB';
+
+    updateSignupButton();
 }
 
 // 회원가입 처리 - 사용자가 실제로 화원가입 버튼을 눌렀을 때 제출(검사->서버전송->결과처리)
 async function handleSignup() {
-    const email = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value;
-    const passwordConfirm = document.getElementById('signupPasswordConfirm').value;
-    const nickname = document.getElementById('signupNickname').value.trim();
-    const profileImage = document.getElementById('profileImage').files[0];
-    
-    // 최종 유효성 검사
-    const emailValid = await validateEmailField();
-    const passwordValid = validatePasswordField();
-    const passwordConfirmValid = validatePasswordConfirmField();
-    const nicknameValid = await validateNicknameField();
-    
-    if (!emailValid || !passwordValid || !passwordConfirmValid || !nicknameValid) {
+    const signupBtn = document.getElementById('signupBtn');
+    if( signupBtn.disabled ) return; // 이중 클릭 방지
+
+    _isSubmitting = true;
+    updateSignupButton(); // 라이브 토글 잠깐 중단
+
+
+    // 제출 직전 강제 최신화(같은 값이면 서버 재요청은 캐시가 막음)
+    const [emailOK, nickOK] = await Promise.all([validateEmailField(), validateNicknameField()]);
+
+    const pwOK = validatePasswordField();
+    const pcOK = validatePasswordConfirmField();
+
+    if (!(emailOK && nickOK && pwOK && pcOK)) {
+        _isSubmitting = false;
+        updateSignupButton();
         showAlert('입력 정보를 확인해주세요.', 'error');
         return;
     }
+
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    const nickname = document.getElementById('signupNickname').value.trim();
+    const profileImage = document.getElementById('profileImage').files[0];
     
-    const signupBtn = document.getElementById('signupBtn');
     const originalText = signupBtn.textContent;
     signupBtn.textContent = '가입 중...';
     signupBtn.disabled = true;
+    
+    // 최종 유효성 검사
+    // const emailValid = await validateEmailField();
+    // const passwordValid = validatePasswordField();
+    // const passwordConfirmValid = validatePasswordConfirmField();
+    // const nicknameValid = await validateNicknameField();
+    
+    // if (!emailValid || !passwordValid || !passwordConfirmValid || !nicknameValid) {
+    //     showAlert('입력 정보를 확인해주세요.', 'error');
+    //     return;
+    // }
     
     try {
         const result = await userAPI.signup(email, password, nickname, profileImage);
@@ -418,13 +466,15 @@ async function handleSignup() {
             }, 1000);
         } else {
             showAlert(result.message || '회원가입에 실패했습니다.', 'error');
-            signupBtn.textContent = originalText;
-            signupBtn.disabled = false;
+            // signupBtn.textContent = originalText;
+            // signupBtn.disabled = false;
         }
     } catch (error) {
         console.error('회원가입 오류:', error);
         showAlert('회원가입 중 오류가 발생했습니다.', 'error');
+    } finally {
         signupBtn.textContent = originalText;
-        signupBtn.disabled = false;
+        _isSubmitting = false;
+        checkFormValidity();
     }
 }

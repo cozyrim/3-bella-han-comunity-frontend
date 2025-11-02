@@ -9,7 +9,20 @@
                 <a href="/" class="nav-link <%= typeof currentPath !== 'undefined' && currentPath === '/' ? 'active' : '' %>">홈</a>
                 <a href="/login" class="nav-link" id="loginLink" style="<%= typeof isLoggedIn !== 'undefined' && isLoggedIn ? 'display: none;' : '' %>">로그인</a>
                 <a href="/signup" class="nav-link" id="signupLink" style="<%= typeof isLoggedIn !== 'undefined' && isLoggedIn ? 'display: none;' : '' %>">회원가입</a>
-                <a href="/profile" class="nav-link" id="profileLink" style="<%= typeof isLoggedIn !== 'undefined' && isLoggedIn ? '' : 'display: none;' %>">내 정보</a>
+                <!-- 아바타 링크: 로그인시에만 보임 -->
+                <!-- <a href="/profile" class="nav-link" id="profileLink" style="<%= typeof isLoggedIn !== 'undefined' && isLoggedIn ? '' : 'display: none;' %>">내 정보</a> -->
+                <a href="/profile" class="nav-avatar-link" id="profileLink"
+           style="<%= typeof isLoggedIn !== 'undefined' && isLoggedIn ? '' : 'display:none;' %>"
+           title="<%= (typeof currentUser !== 'undefined' && currentUser && currentUser.nickname) ? currentUser.nickname : '내 프로필' %>">
+          <img id="navAvatar" class="nav-avatar"
+               src="<%= (typeof currentUser !== 'undefined' && currentUser && currentUser.profileImageUrl)
+                        ? currentUser.profileImageUrl
+                        : '/images/avatar-default.png' %>"
+               alt="프로필 이미지"
+               onerror="this.onerror=null;this.src='images/avatar-default.png'">
+          <span class="sr-only">내 프로필</span>
+        </a>
+                
                 <a href="#" onclick="logout()" class="nav-link" id="logoutLink" style="<%= typeof isLoggedIn !== 'undefined' && isLoggedIn ? '' : 'display: none;' %>">로그아웃</a>
             </div>
         </div>

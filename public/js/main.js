@@ -1,6 +1,6 @@
 // 전역 상태
 let currentUser = null;
-
+const DEFAULT_AVATAR_URL = 'images/avatar-default.png';
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
     loadUserFromSession();
@@ -46,21 +46,39 @@ function updateNavigation(isLoggedIn) {
         if (loginLink) loginLink.style.display = 'none';
         if (signupLink) signupLink.style.display = 'none';
         if (profileLink) {
-            profileLink.style.display = 'block';
-            if (currentUser && currentUser.nickname) {
-                profileLink.textContent = currentUser.nickname;
+            profileLink.style.display = 'inline-flex';
+            profileLink.href = '/profile'; // 클릭하면 프로필 페이지
+
+            // 현재 유저의 이미지가 있으면 사용, 없으면 기본 이미지
+            const src = (currentUser && currentUser.profileImageUrl)
+            ? currentUser.profileImageUrl
+            : DEFAULT_AVATAR_URL;
+
+            if (navAvatar) {
+                navAvatar.src = src;
+                navAvatar.alt = (currentUser?.nickname || '프로필');
+
+                // 이미지가 깨질 때 기본 이미지로 폴백
+                navAvatar.onerror = () => {
+                navAvatar.onerror = null;
+                navAvatar.src = DEFAULT_AVATAR_URL;
+                };
+            }
+
+            // **닉네임 보여주고 싶다면** title 속성으로 툴팁만
+            profileLink.title = currentUser?.nickname || '내 프로필';
+            }
+
+            if (logoutLink)    logoutLink.style.display = 'block';
+            if (createPostBtn) createPostBtn.style.display = 'block';
+        } else {
+            if (loginLink)     loginLink.style.display = 'block';
+            if (signupLink)    signupLink.style.display = 'block';
+            if (profileLink)   profileLink.style.display = 'none';
+            if (logoutLink)    logoutLink.style.display = 'none';
+            if (createPostBtn) createPostBtn.style.display = 'none';
             }
         }
-        if (logoutLink) logoutLink.style.display = 'block';
-        if (createPostBtn) createPostBtn.style.display = 'block';
-    } else {
-        if (loginLink) loginLink.style.display = 'block';
-        if (signupLink) signupLink.style.display = 'block';
-        if (profileLink) profileLink.style.display = 'none';
-        if (logoutLink) logoutLink.style.display = 'none';
-        if (createPostBtn) createPostBtn.style.display = 'none';
-    }
-}
 
 // 로그아웃
 async function handleLogout(e) {

@@ -17,6 +17,8 @@ async function loadProfile() {
             sessionStorage.setItem('currentUser', JSON.stringify(user));
             currentUser = user;
             
+            // 내비게이션 (아바타/닉네임) 즉시 갱신
+            updateNavigation(true);
             // 화면 표시
             const emailInput = document.getElementById('profileEmail');
             const nicknameInput = document.getElementById('profileNickname');
@@ -28,7 +30,7 @@ async function loadProfile() {
             
             if (user.profileImageUrl) {
                 const profileImage = document.getElementById('profileImage');
-                if (profileImage) {
+                if (profileImage && user.profileImageUrl) {
                     profileImage.src = user.profileImageUrl;
                 }
             }

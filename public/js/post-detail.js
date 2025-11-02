@@ -1,3 +1,6 @@
+const postId = getQueryParam('id');
+console.log('postId from URL =', postId);
+
 // 게시글 상태
 let currentPost = null;
 let currentImageIndex = 0;
@@ -16,6 +19,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     loadPost(postId);
     
+    loadComments(postId);
+
     const deleteBtn = document.getElementById('deleteBtn');
     if (deleteBtn) {
         deleteBtn.addEventListener('click', () => handleDeletePost(postId));
@@ -95,6 +100,13 @@ function renderPost(post) {
         contentElement.innerHTML = formattedContent;
     }
     
+    // 조회수
+    const viewsEl = document.getElementById('postViews');
+    if( viewsEl) {
+        const views = (typeof post.viewCount === 'number') ? post.viewCount : (post.viewCount ?? 0);
+        viewsEl.textContent = `👁️${views.toLocaleString()}`;
+    }
+
     // 이미지 슬라이더 렌더링
     const imagesElement = document.getElementById('postImages');
     if (imagesElement) {
@@ -293,6 +305,77 @@ async function handleDeletePost(postId) {
         showAlert('게시글 삭제 중 오류가 발생했습니다.', 'error');
     }
 }
+
+// 댓글 목록 로드
+async function loadComments(postId) {
+    try {
+        const result = await commentsAPI.getComments(postId);
+
+        if (!result.success) {
+            console.warn('댓글 로드 실패:', result.message || result.code || result.status);
+            renderComments([]);
+            return;
+        }
+        const comments = Array.isArray(result.data) ? result.data : [];
+        renderComments(comments);
+    } catch (error) {
+        console.error('댓글 로드 오류:', error);
+        renderComments([]);
+    }
+}
+
+// 댓글 렌더링
+function renderComments(comments) {
+    const listEl = document.getElementById('commentsList');
+    const countEl = document.getElementById('commentCount');
+    if (!listEl) return;
+
+    if(countEl) countEl.textContent = comments.length ?? 0;
+
+    if (!comments.length) {
+        listEl.innerHTML = `
+      <li style="color:#888; padding:8px 0;">아직 댓글이 없어요. 첫 댓글을 남겨보세요!</li>
+    `;
+    return;
+    }
+
+    // 목록 렌더
+    const html = comments.map(buildCommentItemHTML).join('');
+    listEl.innerHTML = html;
+
+    // 페이지넹시녀/더보기는 서버 스펙 정해지면 on/off
+
+}
+
+// 단일 댓글 템플릿
+function buildCommentItemHTML(comment) {
+    const nickname = escapeHtml(comment.authorNickname ?? '익명');
+    const content = escapeHtml(comment.content ?? '').replace(/\n/g, '<br>');
+    const created = comment.createdAt ? formatDate(comment.createdAt) : '';
+    const mineBadge = comment.mine ? `<span style="margin-left:6px; font-size:12px; color:#007bff;">내 댓글</span>` : '';
+
+    return `
+    <li class="comment-item" data-comment-id="${comment.commentId}" style="border-bottom:1px solid #eee; padding:12px 0;">
+        <div class= "comment-meta" style="font-size:14px; color: #666;">
+            <strong>${nickname}</strong>${mineBadge}
+            <span style="margin-left:8px;">. ${created}</span>
+            </div>
+        <div class="comment-body" style="margin-top:6px; font-size:15px; line-height:1.5;">
+        ${content}
+        </div>
+        <!-- 필요 시 좋아요/수정/삭제 버튼 영역(나중에 조건부 노출) -->
+        <!--
+        <div class="comment-actions" style="margin-top:8px;">
+            <button class="btn btn-xs">좋아요 ${comment.likesCount ?? 0}</button>
+            ${comment.mine ? '<button class="btn btn-xs btn-outline">수정</button><button class="btn btn-xs btn-danger-outline">삭제</button>' : ''}
+        </div>
+        -->
+        </li>
+    `;
+}
+
+
+
 
 // 목록으로 돌아가기
 function goBack() {
