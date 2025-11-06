@@ -34,31 +34,30 @@ app.use('/api', (req, res, next) => {
 // API 프록시: /api -> 백엔드 (8080)
 // 주의: body parser 전에 등록해야 POST body를 백엔드로 전달 가능
 app.use('/api', createProxyMiddleware({
-    target: 'http://localhost:8080',
-    changeOrigin: true,
-    xfwd: true, 
-    timeout: 60000,
-    proxyTimeout: 60000,
-    // pathRewrite: (path) => path.startsWith('/api/') ? path : '/api' + path,
-    pathRewrite: (path) => '/api' + path, 
-    cookieDomainRewrite: 'localhost',
-    cookiePathRewrite: '/',
-    logLevel: 'debug',                    // ✅ 추가
-    onProxyReq(proxyReq, req) {
+  target: 'http://localhost:8080/api',  // ★ /api 포함
+  changeOrigin: true,
+  xfwd: true,
+  timeout: 60000,
+  proxyTimeout: 60000,
+  pathRewrite: { '^/api': '' },         // ★ '/api/v1' 유지됨
+  cookieDomainRewrite: 'localhost',
+  cookiePathRewrite: '/',
+  logLevel: 'debug',
+  onProxyReq(proxyReq, req) {
     console.log('[PROXY→]', req.method, req.originalUrl);
-    },
-    onProxyRes(proxyRes, req) {
+  },
+  onProxyRes(proxyRes, req) {
     console.log('[PROXY←]', req.method, req.originalUrl, '→', proxyRes.statusCode);
-    },
-    onError(err, req, res) {
+  },
+  onError(err, req, res) {
     console.error('[PROXY ERR]', req.method, req.originalUrl, '-', err.message);
-    res.status(500).json({ success:false, code:'E500', message: '프록시 에러', detail: err.message });
-    }
+    res.status(500).json({ success:false, code:'E500', message:'프록시 에러', detail: err.message });
+  }
 }));
 
 // 파일 프록시
 app.use('/files', createProxyMiddleware({
-    target: 'http://localhost:8080',
+    target: 'http://localhost:8080/api',
     changeOrigin: true,
     timeout: 60000
 }));

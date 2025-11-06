@@ -69,8 +69,13 @@ async function handleLogin() {
         const result = await authAPI.login(email, password);
         
         if (result.success) {
-            // 사용자 정보 저장 (JSESSIONID, XSRF-TOKEN 쿠키는 자동 저장됨)
-            sessionStorage.setItem('currentUser', JSON.stringify(result.data));
+            
+            const loginResp = result.data; // LoginResponse
+            const user = loginResp?.user;
+            const token = loginResp?.accessToken;
+
+            if (token) sessionStorage.setItem('accessToken', token);
+            if (user)  sessionStorage.setItem('currentUser', JSON.stringify(user));
 
             showAlert('로그인 성공!', 'success');
 
@@ -396,19 +401,6 @@ async function validateNicknameField() {
 //동기 판정으로 변경, 캐시된 플래그만 사용
 // 전체 폼 유효성 검사 - 현재 폼이 제출 가능 상태인지 게산해서 가입 버튼 활성/비활성 토글
 async function checkFormValidity() {
-    // const emailValid = await validateEmailField();
-    // const passwordValid = validatePasswordField();
-    // const passwordConfirmValid = validatePasswordConfirmField();
-    // const nicknameValid = await validateNicknameField();
-    
-    // const signupBtn = document.getElementById('signupBtn');
-    
-    // if (emailValid && passwordValid && passwordConfirmValid && nicknameValid) {
-    //     signupBtn.disabled = false;
-    //     signupBtn.style.backgroundColor = '#7F6AEE';
-    // } else {
-    //     signupBtn.disabled = true;
-    //     signupBtn.style.backgroundColor = '#ACADEB';
 
     updateSignupButton();
 }
@@ -444,16 +436,6 @@ async function handleSignup() {
     signupBtn.textContent = '가입 중...';
     signupBtn.disabled = true;
     
-    // 최종 유효성 검사
-    // const emailValid = await validateEmailField();
-    // const passwordValid = validatePasswordField();
-    // const passwordConfirmValid = validatePasswordConfirmField();
-    // const nicknameValid = await validateNicknameField();
-    
-    // if (!emailValid || !passwordValid || !passwordConfirmValid || !nicknameValid) {
-    //     showAlert('입력 정보를 확인해주세요.', 'error');
-    //     return;
-    // }
     
     try {
         const result = await userAPI.signup(email, password, nickname, profileImage);

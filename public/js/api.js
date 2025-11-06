@@ -1,4 +1,37 @@
-const API_BASE_URL = '/api/v1';
+const API_BASE_URL = 'http://localhost:3000/api/v1';
+
+
+// Access 토큰 저장/조회 유틸
+function getAccessToken() {
+    return sessionStorage.getItem('accessToken');
+}
+function setAccessToken(token) {
+    if (token) sessionStorage.setItem('accessToken', token);
+}
+function clearAuth() {
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('currentUser');
+}
+
+// refresh 호출 (쿠키 필요)
+async function refreshAccessToken() {
+    const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include', // ★ 리프레시 쿠키 전송
+    });
+
+    if (!res.ok) return null;
+
+    // 바디의 data.accessToken + 헤더 Authorization 모두 지원
+    let json = null;
+    try { json = await res.json(); } catch {}
+    const bodyToken = json?.data?.accessToken;
+    const headerToken = res.headers.get('Authorization')?.replace(/^Bearer\s+/i, '');
+
+    const newAccess = bodyToken || headerToken;
+    if (newAccess) setAccessToken(newAccess);
+    return newAccess || null;
+}
 
 // 공통 API 호출 함수
 async function apiCall(endpoint, options = {}) {
@@ -19,120 +52,96 @@ async function apiCall(endpoint, options = {}) {
         headers['Content-Type'] = 'application/json';
     }
 
-    // 요청 옵션
-    const fetchOptions = {
-        method,
-        headers,
-        credentials: 'include', // JSESSIONID, XSRF-TOKEN 쿠키 자동 전송
-    };
+    if (requiresAuth) {
+        const token = sessionStorage.getItem('accessToken');
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+    } 
 
-    // 요청 본문 설정
-    if (body && method.toUpperCase() !== 'GET') {
-        fetchOptions.body = isFormData ? body : JSON.stringify(body);
+    // 요청 옵션
+    // ★ 리프레시 쿠키 사용을 위해 항상 include
+  const fetchOptions = {
+    method,
+    headers,
+    credentials: 'include',
+  };
+  if (body && method.toUpperCase() !== 'GET') {
+    fetchOptions.body = isFormData ? body : JSON.stringify(body);
+  }
+
+  // 내부 함수: 실제 호출
+  const doFetch = async () => {
+    const resp = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
+    // 204 등 바디 없는 응답 방어
+    let data = null;
+    if (resp.status !== 204) {
+      try { data = await resp.json(); } catch {}
     }
+    return { resp, data };
+  };
 
     try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
-        
-        if (!response) {
-            throw new Error('서버로부터 응답을 받지 못했습니다.');
-        }
+    // 1차 호출
+    let { resp, data } = await doFetch();
 
-        // 401 Unauthorized 처리 (세션 만료)
-        if (response.status === 401) {
-            console.log('401 인증 실패 - 세션 만료');
-            sessionStorage.removeItem('currentUser');
+    // 401 → 자동 리프레시 → 1회 재시도
+    if (resp.status === 401 && requiresAuth) {
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        // Authorization 헤더 갱신 후 재시도
+        fetchOptions.headers = { ...fetchOptions.headers, Authorization: `Bearer ${newToken}` };
+        ({ resp, data } = await doFetch());
+      } else {
+        clearAuth();
+      }
+    }
 
-            if (requiresAuth) {
-                showAlert('로그인이 필요합니다.', 'error');
-                setTimeout(() => {
-                    window.location.href = '/login';
-                }, 1000);
-            }
+    // 403 처리
+    if (resp.status === 403) {
+      return { success: false, message: '접근 권한이 없습니다.', status: 403 };
+    }
 
-            return {
-                success: false,
-                message: '인증이 필요합니다.',
-                status: 401
-            };
-        }
-
-        // 403 Forbidden 처리
-        if (response.status === 403) {
-            showAlert('접근 권한이 없습니다.', 'error');
-            return {
-                success: false,
-                message: '접근 권한이 없습니다.',
-                status: 403
-            };
-        }
-
-
-        let data = null;
-        if (response.status !== 204) {
-      // 서버가 JSON이 아닐 수도 있으니 방어적으로
-        data = await response.json().catch(() => null);
-        }
-
-        if (response.ok) {
-        return {
-            success: true,
-            data: data?.data ?? null,
-            message: data?.message ?? null,
-            code: data?.code ?? null
-        };
-        } else {
-        return {
-            success: false,
-            message: data?.message || '요청 처리 중 오류가 발생했습니다.',
-            code: data?.code,
-            status: response.status
-        };
-        }
-    } catch (error) {
-        console.error('API 호출 오류:', error);
-        
-        // ERR_EMPTY_RESPONSE 오류 처리
-        if (error.message.includes('ERR_EMPTY_RESPONSE') || error.message.includes('서버로부터 응답을 받지 못했습니다')) {
-            return {
-                success: false,
-                message: '서버가 응답하지 않습니다. 잠시 후 다시 시도해주세요.',
-                error: error.message
-            };
-        }
-        
-        // 네트워크 오류 처리
-        if (error.name === 'TypeError' && error.message.includes('fetch')) {
-            return {
-                success: false,
-                message: '네트워크 연결을 확인해주세요.',
-                error: error.message
-            };
-        }
-        
-        return { 
-            success: false, 
-            message: '서버와의 통신 중 오류가 발생했습니다.', 
-            error: error.message 
-        };
-    } 
+    // 정상/에러 공통 포맷
+    if (resp.ok) {
+      return {
+        success: true,
+        data: data?.data ?? null,
+        message: data?.message ?? null,
+        code: data?.code ?? null,
+        status: resp.status,
+      };
+    } else {
+      // 401일 때 로그인 페이지 유도 등
+      if (resp.status === 401 && requiresAuth) {
+        return { success: false, message: '인증이 필요합니다.', status: 401 };
+      }
+      return {
+        success: false,
+        message: data?.message || '요청 처리 중 오류가 발생했습니다.',
+        code: data?.code,
+        status: resp.status
+      };
+    }
+  } catch (e) {
+    console.error('API 호출 오류:', e);
+    return { success: false, message: '서버와의 통신 중 오류가 발생했습니다.', error: e.message };
+  }
 }
 
 // 인증 API
 const authAPI = {
-    login: async (email, password) => {
-        return apiCall('/auth/login', {
-            method: 'POST',
-            body: { email, password },
-            requiresAuth: false
-        });
-    },
-    
-    logout: async () => {
-        return apiCall('/auth/logout', {
-            method: 'POST'
-        });
-    }
+  login: async (email, password) => {
+    return apiCall('/auth/login', {
+      method: 'POST',
+      body: { email, password },
+      requiresAuth: false
+    });
+  },
+  logout: async () => {
+    // 서버 쿠키 삭제 + DB revoke
+    const out = await apiCall('/auth/logout', { method: 'POST' });
+    if (out.success) clearAuth(); // 클라이언트 상태도 정리
+    return out;
+  }
 };
 
 // 사용자 API
@@ -255,12 +264,49 @@ const postAPI = {
 };
 
 // 댓글 API
-const commentsAPI = {
-    getComments : async (postId) => {
-        return apiCall(`/posts/${postId}/comments`, {
-            method: 'GET',
-            requiresAuth: false // 현재는 목록 공개, 나중에 잠그면 credentials 로 쿠키도 전송
-        });
-    }
+window.commentsAPI = {
+   // 목록 (공개라면 requiresAuth:false, 보호라면 true로 바꿔)
+    getComments(postId) {
+      return apiCall(`/posts/${postId}/comments`, {
+        method: 'GET',
+        requiresAuth: true,
+      });
+    },
+
+   // 생성 (보통 인증 필요)
+    create(postId, content) {
+      return apiCall(`/posts/${postId}/comments`, {
+        method: 'POST',
+        body: { content },
+        requiresAuth: true,
+      });
+    },
+
+    update(postId, commentId, content) {
+      return apiCall(`/posts/${postId}/comments/${commentId}`, {
+        method: 'PUT',
+        body: { content },
+        requiresAuth: true,
+      });
+    },
+
+    remove(postId, commentId) {
+      return apiCall(`/posts/${postId}/comments/${commentId}`, {
+        method: 'DELETE',
+        requiresAuth: true,
+      });
+    },
+  };
+
+// 배치 카운트 API (가능한 경우)
+window.commentsAPI.getCounts = async function (postIds) {
+  // 백엔드 스펙: POST /api/v1/posts/comments/counts  바디: { postIds: [...] }
+  return apiCall('/posts/comments/counts', {
+    method: 'POST',
+    body: { postIds },
+    // 댓글 수는 공개로도 괜찮으면 false, 보호면 true
+    requiresAuth: false
+  }).then(res => res.success ? (res.data || {}) : {});
 };
+
 

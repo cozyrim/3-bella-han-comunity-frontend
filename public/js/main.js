@@ -1,6 +1,5 @@
 // 전역 상태
 let currentUser = null;
-const DEFAULT_AVATAR_URL = 'images/avatar-default.png';
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
     loadUserFromSession();

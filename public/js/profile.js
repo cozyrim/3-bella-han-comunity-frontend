@@ -1,50 +1,42 @@
 // 페이지 초기화
-document.addEventListener('DOMContentLoaded', function() {
-    if (!requireLogin()) return;
-    
-    loadProfile();
+document.addEventListener('DOMContentLoaded', async () => {
+  // 로그인 필수면 여기서 체크
+  const userJson = sessionStorage.getItem('currentUser');
+  if (!userJson) {
+    showAlert('로그인이 필요합니다.', 'error');
+    setTimeout(() => (window.location.href = '/login'), 800);
+    return;
+  }
+  await loadProfile();   // ← 중요: 실제로 호출!
 });
 
 // 프로필 로드 (서버에서 최신 정보 조회)
 async function loadProfile() {
-    try {
-        const result = await userAPI.getProfile();
-        
-        if (result.success && result.data) {
-            const user = result.data;
-            
-            // sessionStorage 업데이트
-            sessionStorage.setItem('currentUser', JSON.stringify(user));
-            currentUser = user;
-            
-            // 내비게이션 (아바타/닉네임) 즉시 갱신
-            updateNavigation(true);
-            // 화면 표시
-            const emailInput = document.getElementById('profileEmail');
-            const nicknameInput = document.getElementById('profileNickname');
-            const userIdDisplay = document.getElementById('userId');
-            
-            if (emailInput) emailInput.value = user.email || '';
-            if (nicknameInput) nicknameInput.value = user.nickname || '';
-            if (userIdDisplay) userIdDisplay.textContent = `사용자 ID: ${user.userId || ''}`;
-            
-            if (user.profileImageUrl) {
-                const profileImage = document.getElementById('profileImage');
-                if (profileImage && user.profileImageUrl) {
-                    profileImage.src = user.profileImageUrl;
-                }
-            }
-        } else {
-            sessionStorage.removeItem('currentUser');
-            showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'error');
-            setTimeout(() => {
-                window.location.href = '/login';
-            }, 1000);
-        }
-    } catch (error) {
-        console.error('프로필 로드 오류:', error);
-        showAlert('프로필을 불러오는 중 오류가 발생했습니다.', 'error');
+  try {
+    const result = await userAPI.getProfile(); // /users/me
+    if (!result?.success || !result.data) throw new Error('no data');
+
+    const user = result.data;
+
+    // 세션/상태 갱신
+    sessionStorage.setItem('currentUser', JSON.stringify(user));
+    updateNavigation(); // 네비 즉시 반영
+
+    // 화면 채우기
+    document.getElementById('profileEmail').value    = user.email ?? '';
+    document.getElementById('profileNickname').value = user.nickname ?? '';
+
+    // ★ 프로필 아바타 채우기 (id 주의!)
+    const img = document.getElementById('profileAvatar'); // HTML과 id 일치!
+    if (img) {
+      img.src = resolveAvatarUrl(user.userProfileUrl);
+      img.alt = user.nickname ?? '프로필';
+      img.onerror = () => { img.src = 'http://localhost:8080/files/avatar-default.png'; };
     }
+  } catch (e) {
+    console.error(e);
+    showAlert('프로필을 불러오는 중 오류가 발생했습니다.', 'error');
+  }
 }
 
 // 프로필 수정 (백엔드 API 필요)

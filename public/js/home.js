@@ -125,7 +125,7 @@ function createPostElement(post) {
     postDiv.className = 'post-item';
     postDiv.onclick = () => window.location.href = `/post-detail?id=${post.postId}`;
 
-    const date = formatDateSimple(post.createdAt);
+    const date = formatDateTime(post.createdAt);
     const title = escapeHtml(post.title ?? '');
     const content = escapeHtml(post.content ?? '');
     const contentPreview = content.length > 50 ? content.substring(0, 50) + '...' : content;
@@ -133,8 +133,9 @@ function createPostElement(post) {
 
     const views = (typeof post.viewCount === 'number') ? post.viewCount : Number(post.viewCount ?? 0);
     const likesCount = (typeof post.likesCount === 'number') ? post.likesCount : Number(post.likesCount ?? 0);
+    const commentsCount = (typeof post.commentsCount === 'number') ? post.commentsCount : Number(post.commentsCount ?? 0); 
 
-postDiv.innerHTML = `
+    postDiv.innerHTML = `
   <div class="post-item-header">
     <h3 class="post-item-title" style="font-size: 18px; margin: 0 0 10px 0;">${title}</h3>
   </div>
@@ -149,6 +150,12 @@ postDiv.innerHTML = `
     
     <!-- 오른쪽: 개별 배지 2개 -->
     <span class="post-meta-right" style="display:flex;align-items:center;gap:8px;">
+     <!-- 댓글수 (초기값 0 / 서버가 내려주면 그 값) -->
+    <span class="meta-badge comments" 
+          id="comments-count-${post.postId}"
+          style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:999px;background:#eef7ff;border:1px solid #cfe4ff;">
+      <span>💬</span><strong>${formatCount(commentsCount)}</strong>
+    </span>
       <!-- 좋아요 배지 -->
       <span class="meta-badge like" 
             style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;

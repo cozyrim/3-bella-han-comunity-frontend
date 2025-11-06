@@ -1,3 +1,5 @@
+const DEFAULT_AVATAR_URL = 'http://localhost:8080/files/avatar-default.png';
+
 // 알림 메시지 표시
 function showAlert(message, type = 'info') {
     const existingAlert = document.querySelector('.alert');
@@ -234,10 +236,51 @@ function getQueryParam(key) {
     return new URLSearchParams(location.search).get(key);
 }
 
-// 전역으로 노출 (모듈 아닌 일반 <script> 환경)
-window.getCookie = getCookie;
-window.getCsrfHeaders = getCsrfHeaders;
-window.formatCount = formatCount;
-window.escapeHtml = escapeHtml;
-window.formatDate = formatDate;
-window.getQueryParam = getQueryParam;
+function pad2(n){ return n.toString().padStart(2, '0'); }
+
+function formatDateTime(isoOrMs){
+  const d = new Date(isoOrMs);
+  const yyyy = d.getFullYear();
+  const mm   = pad2(d.getMonth()+1);
+  const dd   = pad2(d.getDate());
+  const hh   = pad2(d.getHours());
+  const mi   = pad2(d.getMinutes());
+  const ss = pad2(d.getSeconds());
+  // 필요하면 초까지: const ss = pad2(d.getSeconds());
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+}
+
+function resolveAvatarUrl(url) {
+  return (url && typeof url === 'string') ? url : DEFAULT_AVATAR_URL;
+}
+// 네비게이션 아바타/닉네임 갱신 (세션 기반)
+function updateNavigation() {
+  try {
+    const raw = sessionStorage.getItem('currentUser');
+    const user = raw ? JSON.parse(raw) : null;
+
+    const avatar = document.getElementById('navAvatar');
+    if (avatar) {
+      const url = resolveAvatarUrl(user?.userProfileUrl); // ← 키 통일!
+      avatar.src = url;
+      avatar.onerror = () => { avatar.src = DEFAULT_AVATAR_URL; };
+    }
+
+    const nameEl = document.getElementById('navNickname');
+    if (nameEl) nameEl.textContent = user?.nickname ?? '';
+  } catch (_) {}
+}
+
+/* === 전역으로 내보낼 것들 한 번만 등록 === */
+window.showAlert         = showAlert;
+window.escapeHtml        = escapeHtml;
+window.formatDate        = formatDate;        // (utils에 중복 정의 있으면 하나만 남겨둬)
+window.formatDateTime    = formatDateTime;
+window.getQueryParam     = getQueryParam;     // (중복 정의 1개만 유지)
+window.formatCount       = formatCount;
+window.getCookie         = getCookie;
+window.getCsrfHeaders    = getCsrfHeaders;
+
+window.resolveAvatarUrl  = resolveAvatarUrl;
+window.updateNavigation  = updateNavigation;
+window.DEFAULT_AVATAR_URL = DEFAULT_AVATAR_URL;

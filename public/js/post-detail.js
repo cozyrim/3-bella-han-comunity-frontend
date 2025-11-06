@@ -1,6 +1,7 @@
 const postId = getQueryParam('id');
 console.log('postId from URL =', postId);
 
+
 // 게시글 상태
 let currentPost = null;
 let currentImageIndex = 0;
@@ -47,6 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 게시글 로드
 async function loadPost(postId) {
+    
     try {
         const result = await postAPI.getPost(postId);
         
@@ -90,7 +92,7 @@ function renderPost(post) {
     // 날짜
     const dateElement = document.getElementById('postDate');
     if (dateElement) {
-        dateElement.textContent = formatDate(post.createdAt);
+        dateElement.textContent = formatDateTime(post.createdAt);
     }
     
     // 내용
@@ -99,86 +101,12 @@ function renderPost(post) {
         const formattedContent = escapeHtml(post.content || '').replace(/\n/g, '<br>');
         contentElement.innerHTML = formattedContent;
     }
-    
-    // 조회수
-    const viewsEl = document.getElementById('postViews');
-    if( viewsEl) {
-        const views = (typeof post.viewCount === 'number') ? post.viewCount : (post.viewCount ?? 0);
-        viewsEl.textContent = `👁️${views.toLocaleString()}`;
-    }
 
-    // 좋아요
-    const metaRight = document.querySelector('#postDetailMetaArea');
-    if (metaRight && !document.getElementById('likeSection')) {
-        const likeWrap = document.createElement('div');
-        likeWrap.id = 'likeSection';
-        likeWrap.innerHTML = `
-            <button id="likeBtn" type="button" class="like-btn"
-                style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border:1px solid #ffd6de;border-radius:999px;background:#fff0f3;cursor:pointer;">
-                <i class="fa fa-heart" aria-hidden="true" style="color:#ff4d6d;"></i>
-                <span id="likeBtnLabel">좋아요</span>
-                <strong id="likesCount" style="margin-left:4px;">${formatCount(post.likesCount)}</strong>
-                
-            </button>
-            
-        `;
-        metaRight.prepend(likeWrap);
-        
-    // 초기 liked 상태를 서버가 내려주면 반영(없으면 false로)
-    updateLikeButtonUI(!!post.likedByMe);
-    attachLikeHandlers(post.postId);
-}
+    // 메타 숫자/색 채우고, 좋아요 클릭 바인딩
+  renderDetailMeta(post);
+  bindLikeHandler(post.postId);
 
-function updateLikeButtonUI(liked) {
-    const btn = document.getElementById('likeBtn');
-    const label = document.getElementById('likeBtnLabel');
-    if (!btn || !label) return;
-
-    if (liked) {
-        btn.style.background = '#ffe3ea';
-        btn.style.borderColor = '#ffb3c2';
-        label.textContent = '💔';
-        btn.setAttribute('data-liked', 'true');
-    } else {
-        btn.style.background = '#fff0f3';
-        btn.style.borderColor = '#ffd6de';
-        label.textContent = '❤️';
-        btn.setAttribute('data-liked', 'false');
-    }
-}
-function attachLikeHandlers(postId) {
-  const btn = document.getElementById('likeBtn');
-  if (!btn) return;
-
-  btn.addEventListener('click', async () => {
-    const liked = btn.getAttribute('data-liked') === 'true';
-
-    // like/unlike로 분기
-    const res = liked ? await postAPI.unlike(postId) : await postAPI.like(postId);
-
-    if (res?.success) {
-      // 서버가 최신 카운트를 내려주지 않는 케이스 대비
-      const c = document.getElementById('likesCount');
-      const next = (res.data?.likesCount != null)
-        ? Number(res.data.likesCount)
-        : Number(currentPost?.likesCount ?? 0) + (liked ? -1 : 1);
-
-      if (c) c.textContent = formatCount(next);
-      updateLikeButtonUI(!liked);
-      currentPost = { ...currentPost, likedByMe: !liked, likesCount: next };
-    } else if (res?.status === 401) {
-      showAlert('로그인이 필요합니다.', 'error');
-      setTimeout(() => (window.location.href = '/login'), 800);
-    } else {
-      showAlert(res?.message ?? '좋아요 처리 중 오류가 발생했습니다.', 'error');
-    }
-  });
-}
-
-
-
-
-    // 이미지 슬라이더 렌더링
+  // (이미지 슬라이더 렌더는 기존 그대로)
     const imagesElement = document.getElementById('postImages');
     if (imagesElement) {
         imagesElement.innerHTML = '';
@@ -188,6 +116,65 @@ function attachLikeHandlers(postId) {
         }
     }
 }
+
+
+
+
+
+function renderDetailMeta(post) {
+  document.getElementById('detail-comments').textContent =
+    formatCount(post.commentsCount ?? 0);
+
+  document.getElementById('detail-likes').textContent =
+    formatCount(post.likesCount ?? 0);
+
+  document.getElementById('detail-views').textContent =
+    (post.viewCount ?? 0).toLocaleString();
+
+  // 좋아요 눌림 상태에 따라 색상 강조
+  const likeBtn = document.getElementById('detail-like-btn');
+  if (likeBtn) {
+    const liked = !!post.likedByMe;
+    likeBtn.setAttribute('aria-pressed', String(liked));
+    likeBtn.style.background = liked ? '#ffe3ea' : '#fff0f3';
+    likeBtn.style.borderColor = liked ? '#ffb3c2' : '#ffd6de';
+  }
+}
+
+function bindLikeHandler(postId) {
+  const btn = document.getElementById('detail-like-btn');
+  if (!btn || btn.__bound) return;
+  btn.__bound = true;
+
+  btn.addEventListener('click', async () => {
+    if (!sessionStorage.getItem('accessToken')) {
+      showAlert('로그인이 필요합니다.', 'error');
+      setTimeout(() => (window.location.href = '/login'), 600);
+      return;
+    }
+
+    const liked = !!currentPost?.likedByMe;
+    btn.disabled = true;
+
+    const res = liked ? await postAPI.unlike(postId) : await postAPI.like(postId);
+    btn.disabled = false;
+
+    if (res?.success) {
+      const nextLikes = (res.data?.likesCount != null)
+        ? Number(res.data.likesCount)
+        : Number(currentPost?.likesCount ?? 0) + (liked ? -1 : 1);
+
+      currentPost = { ...currentPost, likedByMe: !liked, likesCount: nextLikes };
+      renderDetailMeta(currentPost);                   // 상단 배지 + 버튼 색 같이 갱신
+    } else if (res?.status === 401) {
+      showAlert('로그인이 필요합니다.', 'error');
+      setTimeout(() => (window.location.href = '/login'), 800);
+    } else {
+      showAlert(res?.message ?? '좋아요 처리 중 오류가 발생했습니다.', 'error');
+    }
+  });
+}
+
 
 // 이미지 슬라이더 렌더링
 function renderImageSlider(images, container) {
@@ -379,6 +366,8 @@ async function handleDeletePost(postId) {
 
 // 댓글 목록 로드
 async function loadComments(postId) {
+    initCommentUI();
+    setupCommentForm(postId);
     try {
         const result = await commentsAPI.getComments(postId);
 
@@ -414,38 +403,239 @@ function renderComments(comments) {
     const html = comments.map(buildCommentItemHTML).join('');
     listEl.innerHTML = html;
 
-    // 페이지넹시녀/더보기는 서버 스펙 정해지면 on/off
+    attachCommentActionHandlers();
+
+    currentPost = { ...currentPost, commentsCount: comments.length };
+    renderDetailMeta(currentPost);   // 배지 숫자 즉시 반영
 
 }
+
+// 로그인 여부로 입력폼/안내 토글
+function initCommentUI() {
+  const isLoggedIn = !!sessionStorage.getItem('currentUser');
+  const gate = document.getElementById('commentLoginGate');  // 비로그인 안내
+  const form = document.getElementById('commentFormWrap');   // 댓글 작성 폼
+  if (!gate || !form) return;
+
+  if (isLoggedIn) {
+    gate.style.display = 'none';
+    form.style.display = 'block';
+  } else {
+    gate.style.display = 'block';
+    form.style.display = 'none';
+  }
+}
+
+// 폼 이벤트 바인딩 (글자수/등록)
+function setupCommentForm(postId) {
+  const textarea = document.getElementById('commentContent');
+  const counter  = document.getElementById('commentChars');
+  const submit   = document.getElementById('commentSubmitBtn');
+  if (!textarea || !counter || !submit) return;
+
+  const MAX = 255;
+
+  const updateState = () => {
+    const len = textarea.value.trim().length;
+    counter.textContent = `${len} / ${MAX}`;
+    submit.disabled = len === 0 || len > MAX;
+  };
+
+  textarea.addEventListener('input', updateState);
+  updateState();
+
+  submit.addEventListener('click', async () => {
+    // 로그인 안전망
+    if (!sessionStorage.getItem('currentUser')) {
+      showAlert('로그인이 필요합니다.', 'error');
+      setTimeout(() => (window.location.href = '/login'), 600);
+      return;
+    }
+
+    const content = textarea.value.trim();
+    if (!content) return;
+
+    submit.disabled = true;
+    try {
+      // 프로젝트에 따라 이름 다를 수 있어 두 가지 모두 지원
+      const createFn = (commentsAPI.createComment || commentsAPI.create);
+      if (!createFn) throw new Error('commentsAPI.create(…)/createComment(…) 가 필요합니다.');
+
+      const res = await createFn(postId, content); // 서버: {success, data, message…} 가정
+      if (res?.success) {
+        textarea.value = '';
+        updateState();
+        await loadComments(postId);  // 목록 새로고침
+      } else if (res?.status === 401) {
+        showAlert('로그인이 필요합니다.', 'error');
+        setTimeout(() => (window.location.href = '/login'), 600);
+      } else {
+        showAlert(res?.message || '댓글 등록에 실패했습니다.', 'error');
+      }
+    } catch (e) {
+      console.error(e);
+      showAlert('댓글 등록 중 오류가 발생했습니다.', 'error');
+    } finally {
+      submit.disabled = false;
+    }
+  });
+}
+
+function enterEditMode(li) {
+  const view = li.querySelector('.comment-view');
+  const edit = li.querySelector('.comment-edit');
+  const input = li.querySelector('.comment-edit-input');
+  const count = li.querySelector('.comment-edit-count');
+
+  if (!view || !edit || !input || !count) return;
+
+  // 기존 텍스트를 textarea에 채움 (br → \n)
+  const rawHtml = view.innerHTML || '';
+  const plain = rawHtml.replace(/<br\s*\/?>/gi, '\n').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+  input.value = plain;
+
+  const updateCount = () => { count.textContent = `${input.value.trim().length} / 255`; };
+  input.addEventListener('input', updateCount);
+  updateCount();
+
+  view.style.display = 'none';
+  edit.style.display = 'block';
+}
+
+function exitEditMode(li) {
+  const view = li.querySelector('.comment-view');
+  const edit = li.querySelector('.comment-edit');
+  if (!view || !edit) return;
+  edit.style.display = 'none';
+  view.style.display = 'block';
+}
+
+let _commentUpdating = false;
+async function saveEditedComment(li, commentId) {
+  if (_commentUpdating) return;
+  const input = li.querySelector('.comment-edit-input');
+  const content = input?.value.trim() || '';
+  if (!content || content.length > 255) {
+    showAlert('내용은 1~255자여야 합니다.', 'error');
+    return;
+  }
+  _commentUpdating = true;
+  try {
+    const postId = getQueryParam('id');
+    const res = await commentsAPI.update(postId, commentId, content);
+    if (res?.success) {
+      await loadComments(postId);
+      showAlert('댓글이 수정되었습니다.', 'success');
+    } else {
+      showAlert(res?.message || '댓글 수정에 실패했습니다.', 'error');
+    }
+  } catch (e) {
+    console.error(e);
+    showAlert('댓글 수정 중 오류가 발생했습니다.', 'error');
+  } finally {
+    _commentUpdating = false;
+  }
+}
+
+let _commentDeleting = false;
+async function deleteComment(commentId) {
+  if (_commentDeleting) return;
+  if (!confirm('이 댓글을 삭제할까요?')) return;
+  _commentDeleting = true;
+  try {
+    const postId = getQueryParam('id');
+    const res = await commentsAPI.remove(postId, commentId);
+    if (res?.success) {
+      await loadComments(postId);
+      showAlert('댓글이 삭제되었습니다.', 'success');
+    } else {
+      showAlert(res?.message || '댓글 삭제에 실패했습니다.', 'error');
+    }
+  } catch (e) {
+    console.error(e);
+    showAlert('댓글 삭제 중 오류가 발생했습니다.', 'error');
+  } finally {
+    _commentDeleting = false;
+  }
+}
+
+
 
 // 단일 댓글 템플릿
 function buildCommentItemHTML(comment) {
-    const nickname = escapeHtml(comment.authorNickname ?? '익명');
-    const content = escapeHtml(comment.content ?? '').replace(/\n/g, '<br>');
-    const created = comment.createdAt ? formatDate(comment.createdAt) : '';
-    const mineBadge = comment.mine ? `<span style="margin-left:6px; font-size:12px; color:#007bff;">내 댓글</span>` : '';
+  const nickname = escapeHtml(comment.authorNickname ?? '익명');
+  const content  = escapeHtml(comment.content ?? '').replace(/\n/g, '<br>');
+  const created  = comment.createdAt ? formatDateTime(comment.createdAt) : '';
+  const mine     = !!comment.mine;
 
-    return `
-    <li class="comment-item" data-comment-id="${comment.commentId}" style="border-bottom:1px solid #eee; padding:12px 0;">
-        <div class= "comment-meta" style="font-size:14px; color: #666;">
-            <strong>${nickname}</strong>${mineBadge}
-            <span style="margin-left:8px;">. ${created}</span>
-            </div>
-        <div class="comment-body" style="margin-top:6px; font-size:15px; line-height:1.5;">
-        ${content}
+  return `
+  <li class="comment-item" data-comment-id="${comment.commentId}" style="border-bottom:1px solid #eee; padding:12px 0;">
+    <div class="comment-meta" style="font-size:14px; color:#666;">
+      <strong>${nickname}</strong>${mine ? '<span style="margin-left:6px;font-size:12px;color:#007bff;">내 댓글</span>' : ''}
+      <span style="margin-left:8px;">· ${created}</span>
+    </div>
+
+    <div class="comment-body" style="margin-top:6px; font-size:15px; line-height:1.5;">
+      <div class="comment-view">${content}</div>
+
+      <!-- 편집 모드 영역 (초기 숨김) -->
+      <div class="comment-edit" style="display:none; margin-top:6px;">
+        <textarea class="comment-edit-input" rows="3" maxlength="255" style="width:100%; box-sizing:border-box;"></textarea>
+        <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
+          <span class="comment-edit-count" style="font-size:12px; color:#888;">0 / 255</span>
+          <div style="margin-left:auto; display:flex; gap:6px;">
+            <button class="btn btn-xs comment-edit-save" style="padding:4px 8px; border:1px solid #ddd; border-radius:6px; background:#0d6efd; color:#fff;">저장</button>
+            <button class="btn btn-xs comment-edit-cancel" style="padding:4px 8px; border:1px solid #ddd; border-radius:6px; background:#fff;">취소</button>
+          </div>
         </div>
-        
-        <!--
-        <div class="comment-actions" style="margin-top:8px;">
-            <button class="btn btn-xs">좋아요 ${comment.likesCount ?? 0}</button>
-            ${comment.mine ? '<button class="btn btn-xs btn-outline">수정</button><button class="btn btn-xs btn-danger-outline">삭제</button>' : ''}
-        </div>
-        -->
-        </li>
-    `;
+      </div>
+    </div>
+
+    ${mine ? `
+    <div class="comment-actions" style="margin-top:8px; display:flex; gap:8px;">
+      <button class="btn btn-xs comment-edit-btn" style="padding:4px 8px; border:1px solid #ddd; border-radius:6px; background:#fff;">수정</button>
+      <button class="btn btn-xs comment-delete-btn" style="padding:4px 8px; border:1px solid #ffb4b4; border-radius:6px; background:#fff0f0; color:#d00;">삭제</button>
+    </div>
+    ` : ''}
+  </li>
+  `;
 }
 
+function attachCommentActionHandlers() {
+  const listEl = document.getElementById('commentsList');
+  if (!listEl || listEl.__handlersBound) return; // 중복 방지
+  listEl.__handlersBound = true;
 
+  listEl.addEventListener('click', async (e) => {
+    const li = e.target.closest('.comment-item');
+    if (!li) return;
+    const commentId = li.getAttribute('data-comment-id');
+
+    // 수정 버튼
+    if (e.target.closest('.comment-edit-btn')) {
+      enterEditMode(li);
+      return;
+    }
+
+    // 취소 버튼
+    if (e.target.closest('.comment-edit-cancel')) {
+      exitEditMode(li);
+      return;
+    }
+
+    // 저장 버튼
+    if (e.target.closest('.comment-edit-save')) {
+      await saveEditedComment(li, commentId);
+      return;
+    }
+
+    // 삭제 버튼
+    if (e.target.closest('.comment-delete-btn')) {
+      await deleteComment(commentId);
+      return;
+    }
+  });
+}
 
 
 // 목록으로 돌아가기
