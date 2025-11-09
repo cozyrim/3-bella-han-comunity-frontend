@@ -18,20 +18,28 @@ async function loadProfile() {
 
     const user = result.data;
 
+    // (핵심) 필드명 정규화: 둘 중 아무거나 왔어도 통일해서 저장
+    const normalized = {
+      ...user,
+      profileImageUrl: user.profileImageUrl || user.userProfileUrl || ''
+    };
+
+
     // 세션/상태 갱신
     sessionStorage.setItem('currentUser', JSON.stringify(user));
-    updateNavigation(); // 네비 즉시 반영
+    currentUser = normalized;
+    updateNavigation(true); // 네비 즉시 반영
 
     // 화면 채우기
     document.getElementById('profileEmail').value    = user.email ?? '';
     document.getElementById('profileNickname').value = user.nickname ?? '';
 
     // ★ 프로필 아바타 채우기 (id 주의!)
-    const img = document.getElementById('profileAvatar'); // HTML과 id 일치!
+    const img = document.getElementById('profileAvatar');
     if (img) {
-      img.src = resolveAvatarUrl(user.userProfileUrl);
-      img.alt = user.nickname ?? '프로필';
-      img.onerror = () => { img.src = 'http://localhost:8080/files/avatar-default.png'; };
+      img.src = normalized.profileImageUrl || DEFAULT_AVATAR_URL;
+      img.alt = normalized.nickname ?? '프로필';
+      img.onerror = () => { img.onerror = null; img.src = DEFAULT_AVATAR_URL; };
     }
   } catch (e) {
     console.error(e);

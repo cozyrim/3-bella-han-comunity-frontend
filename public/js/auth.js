@@ -1,3 +1,25 @@
+import {
+  validateEmail, validateNickname, validatePassword, validatePasswordConfirm,
+  debounce, wireImagePicker
+} from './profile-utils.js';
+
+// 디바운싱을 위한 타이머 저장
+let emailCheckTimer = null;
+let nicknameCheckTimer = null;
+
+// 전역 플래그/캐시
+let _emailValid = false;
+let _nicknameValid = false;
+let _passwordValid = false;
+let _passwordConfirmValid = false;
+
+let _lastCheckedEmail = '';
+let _lastCheckedNickname = '';
+
+let _emailReqSeq = 0;
+let _nicknameReqSeq = 0;
+let _isSubmitting = false;
+
 // 인증 페이지 초기화 (로그인 + 회원가입 통합)
 document.addEventListener('DOMContentLoaded', function() {
     // 이미 로그인 상태면 홈으로 리다이렉트
@@ -23,20 +45,24 @@ document.addEventListener('DOMContentLoaded', function() {
     if (signupBtn) {
         signupBtn.addEventListener('click', handleSignup);
         
-        // 프로필 사진 업로드
+        // ✅ 이미지 인풋은 wireImagePicker로 교체
         const profileImageInput = document.getElementById('profileImage');
         if (profileImageInput) {
-            
-            profileImageInput.addEventListener('change', handleProfileImageChange);
-            
-        } else {
-            console.error(' profileImage 요소를 찾을 수 없습니다!');
-        }
-        
-        // 실시간 유효성 검사
-        setupRealTimeValidation();
-        checkFormValidity();
+        wireImagePicker({
+            inputEl: profileImageInput,
+            previewContainerEl: document.getElementById('profileImagePreview'),
+            helperEl: document.getElementById('profileHelper'),
+            onValid(file){ /* 제출 시 같이 쓸 file – 필요하면 전역에 저장해도 됨 */ },
+            onInvalid(msg){ showAlert(msg, 'error'); }
+        });
+    } else {
+      console.error('profileImage 요소를 찾을 수 없습니다!');
     }
+
+    // ✅ 실시간 유효성 검사 (debounce 사용)
+    setupRealTimeValidation();
+    checkFormValidity();
+  }
 });
 
 // 로그인 처리
@@ -54,11 +80,8 @@ async function handleLogin() {
         return;
     }
     
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        showAlert('올바른 이메일 형식이 아닙니다.', 'error');
-        return;
-    }
+    if (!validateEmail(email)) return showAlert('올바른 이메일 형식이 아닙니다.', 'error');
+
     
     const loginBtn = document.getElementById('loginBtn');
     const originalText = loginBtn.textContent;
@@ -99,73 +122,6 @@ async function handleLogin() {
 }
 
 
-// 프로필 사진 변경 처리
-async function handleProfileImageChange(e) {
-    
-    const file = e.target.files[0];
-    
-    const preview = document.getElementById('profileImagePreview');
-    const helper = document.getElementById('profileHelper');
-    
-    if (!file) {
-        // 파일이 선택되지 않은 경우 기본 상태로 복원
-        preview.innerHTML = `
-            <div class="profile-placeholder">
-                <span class="plus-icon">+</span>
-                <p>프로필 사진을 추가해주세요</p>
-            </div>
-        `;
-        helper.textContent = '*프로필 사진을 추가해주세요.';
-        helper.style.color = '#666';
-        return;
-    }
-    
-    // 파일 유효성 검사
-    const validation = validateImageFile(file);
-    if (!validation.valid) {
-        showAlert(validation.message, 'error');
-        e.target.value = '';
-        return;
-    }
-    
-    try {
-        // 이미지 미리보기 생성
-        
-        const previewUrl = await createImagePreview(file);
-        
-        
-        preview.innerHTML = `
-            <img src="${previewUrl}" alt="프로필 미리보기">
-        `;
-        
-        
-        helper.textContent = '프로필 사진이 선택되었습니다.';
-        helper.style.color = '#28a745';
-        
-        // 폼 유효성 검사 업데이트
-        checkFormValidity();
-    } catch (error) {
-        console.error(' 이미지 미리보기 오류:', error);
-        showAlert('이미지 미리보기를 생성할 수 없습니다.', 'error');
-    }
-}
-
-// 디바운싱을 위한 타이머 저장
-let emailCheckTimer = null;
-let nicknameCheckTimer = null;
-
-// 전역 플래그/캐시
-let _emailValid = false;
-let _nicknameValid = false;
-let _passwordValid = false;
-let _passwordConfirmValid = false;
-
-let _lastCheckedEmail = '';
-let _lastCheckedNickname = '';
-
-let _emailReqSeq = 0;
-let _nicknameReqSeq = 0;
-let _isSubmitting = false;
 
 // 버튼 토글 전용 함수 추가(서버 호출 금지)
 function updateSignupButton() {

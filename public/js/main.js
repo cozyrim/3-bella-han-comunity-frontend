@@ -34,13 +34,19 @@ function initLogoutButton() {
 }
 
 // 네비게이션 업데이트
-function updateNavigation(isLoggedIn) {
+function updateNavigation(isLoggedInParm) {
     const loginLink = document.getElementById('loginLink');
     const signupLink = document.getElementById('signupLink');
     const profileLink = document.getElementById('profileLink');
     const logoutLink = document.getElementById('logoutLink');
     const createPostBtn = document.getElementById('createPostBtn');
-    
+    const navAvatar     = document.getElementById('navAvatar');
+
+    // 인자를 안 주면 currentUser 기준으로 판정
+    const isLoggedIn = (typeof isLoggedInParam === 'boolean')
+        ? isLoggedInParam
+        : !!currentUser;
+
     if (isLoggedIn) {
         if (loginLink) loginLink.style.display = 'none';
         if (signupLink) signupLink.style.display = 'none';
@@ -49,35 +55,24 @@ function updateNavigation(isLoggedIn) {
             profileLink.href = '/profile'; // 클릭하면 프로필 페이지
 
             // 현재 유저의 이미지가 있으면 사용, 없으면 기본 이미지
-            const src = (currentUser && currentUser.profileImageUrl)
-            ? currentUser.profileImageUrl
-            : DEFAULT_AVATAR_URL;
-
+            const src = (currentUser?.profileImageUrl || currentUser?.userProfileUrl || DEFAULT_AVATAR_URL);
             if (navAvatar) {
-                navAvatar.src = src;
-                navAvatar.alt = (currentUser?.nickname || '프로필');
-
-                // 이미지가 깨질 때 기본 이미지로 폴백
-                navAvatar.onerror = () => {
-                navAvatar.onerror = null;
-                navAvatar.src = DEFAULT_AVATAR_URL;
-                };
+                navAvatar.src = src || DEFAULT_AVATAR_URL;
+                navAvatar.alt = currentUser?.nickname || '프로필';
+                navAvatar.onerror = () => { navAvatar.onerror = null; navAvatar.src = DEFAULT_AVATAR_URL; };
             }
-
-            // **닉네임 보여주고 싶다면** title 속성으로 툴팁만
             profileLink.title = currentUser?.nickname || '내 프로필';
-            }
-
-            if (logoutLink)    logoutLink.style.display = 'block';
-            if (createPostBtn) createPostBtn.style.display = 'block';
-        } else {
-            if (loginLink)     loginLink.style.display = 'block';
-            if (signupLink)    signupLink.style.display = 'block';
-            if (profileLink)   profileLink.style.display = 'none';
-            if (logoutLink)    logoutLink.style.display = 'none';
-            if (createPostBtn) createPostBtn.style.display = 'none';
-            }
         }
+        if (logoutLink)    logoutLink.style.display    = 'block';
+        if (createPostBtn) createPostBtn.style.display = 'block';
+        } else {
+        if (loginLink)     loginLink.style.display     = 'block';
+        if (signupLink)    signupLink.style.display    = 'block';
+        if (profileLink)   profileLink.style.display   = 'none';
+        if (logoutLink)    logoutLink.style.display    = 'none';
+        if (createPostBtn) createPostBtn.style.display = 'none';
+        }
+    }
 
 // 로그아웃
 async function handleLogout(e) {

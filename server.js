@@ -57,7 +57,7 @@ app.use('/api', createProxyMiddleware({
 
 // 파일 프록시
 app.use('/files', createProxyMiddleware({
-    target: 'http://localhost:8080/api',
+    target: 'http://localhost:8080',
     changeOrigin: true,
     timeout: 60000
 }));
@@ -113,11 +113,11 @@ app.get('/', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-    res.render('login', { title: '로그인', showSidebar: false, additionalJS: '<script src="/js/auth.js"></script>' });
+    res.render('login', { title: '로그인', showSidebar: false, additionalJS: '<script type="module" src="/js/auth.js"></script>' });
 });
 
 app.get('/signup', (req, res) => {
-    res.render('signup', { title: '회원가입', showSidebar: false, additionalJS: '<script src="/js/auth.js"></script>' });
+    res.render('signup', { title: '회원가입', showSidebar: false, additionalJS: '<script type="module" src="/js/auth.js"></script>' });
 });
 
 app.get('/profile', (req, res) => {
