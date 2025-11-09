@@ -1,4 +1,4 @@
-const DEFAULT_AVATAR_URL = 'http://localhost:8080/files/avatar-default.png';
+const DEFAULT_AVATAR_URL = '/files/avatar-default.png';
 
 // 알림 메시지 표시
 function showAlert(message, type = 'info') {

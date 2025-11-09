@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3000/api/v1';
+const API_BASE_URL = '/api/v1';
 
 
 // Access 토큰 저장/조회 유틸
