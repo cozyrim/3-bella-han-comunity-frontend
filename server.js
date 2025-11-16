@@ -34,7 +34,7 @@ app.use('/api', (req, res, next) => {
 // API 프록시: /api -> 백엔드 (8080)
 // 주의: body parser 전에 등록해야 POST body를 백엔드로 전달 가능
 app.use('/api', createProxyMiddleware({
-  target: 'http://localhost:8080/api',  // ★ /api 포함
+  target: 'http://community-elb-243542493.ap-northeast-2.elb.amazonaws.com/api',  // ★ /api 포함
   changeOrigin: true,
   xfwd: true,
   timeout: 60000,

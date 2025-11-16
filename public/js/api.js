@@ -1,4 +1,4 @@
-const API_BASE_URL = '/api/v1';
+const API_BASE_URL = 'http://community-elb-243542493.ap-northeast-2.elb.amazonaws.com/api/v1';
 
 
 // Access 토큰 저장/조회 유틸
