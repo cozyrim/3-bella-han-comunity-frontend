@@ -1,7 +1,7 @@
-const API_BASE_URL = 'http://community-elb-243542493.ap-northeast-2.elb.amazonaws.com/api/v1';
-
-
-// Access 토큰 저장/조회 유틸
+const API_BASE_URL = window.__ENV__?.API_BASE_URL || 'http://localhost:8080/api/v1';
+const STATIC_URL = window.__ENV__?.STATIC_URL || 'http://localhost:8080/files';
+const LAMBDA_UPLOAD_URL = window.__ENV__?.LAMBDA_UPLOAD_URL;
+// Access 토큰 저장/조회 유틸a
 function getAccessToken() {
     return sessionStorage.getItem('accessToken');
 }
@@ -146,31 +146,15 @@ const authAPI = {
 
 // 사용자 API
 const userAPI = {
-    signup: async (email, password, nickname, profileImage = null) => {
-        if (profileImage) {
-            // 프로필 사진이 있는 경우 FormData로 전송
-            const formData = new FormData();
-            formData.append('email', email);
-            formData.append('password', password);
-            formData.append('nickname', nickname);
-            formData.append('profileImage', profileImage);
-            
+    signup: async (email, password, nickname, profileImageUrl = null) => {
+            // 프로필 사진이 있는 경우 s3에 업로드된 이미지 URL (문자열) 전송
             return apiCall('/users/signup', {
                 method: 'POST',
-                body: formData,
-                isFormData: true,
+                body: { email, password, nickname, profileImageUrl },
                 requiresAuth: false
             });
-        } else {
-            // 프로필 사진이 없는 경우 JSON으로 전송
-            return apiCall('/users/signup', {
-                method: 'POST',
-                body: { email, password, nickname },
-                requiresAuth: false
-            });
-        }
-    },
-    
+        }, 
+     
     checkEmail: async (email) => {
         return apiCall(`/users/check-email?email=${encodeURIComponent(email)}`, {
             method: 'GET',
@@ -194,7 +178,7 @@ const userAPI = {
 };
 
 // 게시글 API
-const postAPI = {
+window.postAPI = {
     getPosts: async (size = 5, cursor = null) => {
         const query = cursor ? `?size=${size}&cursor=${cursor}` : `?size=${size}`;
         return apiCall(`/posts${query}`, {
@@ -309,4 +293,68 @@ window.commentsAPI.getCounts = async function (postIds) {
   }).then(res => res.success ? (res.data || {}) : {});
 };
 
+// Lambda 업로드 API 호출 함수
+async function uploadToLambda(file, folder = "others") {
+  const formData = new FormData();
 
+  if (file instanceof File) {
+    formData.append("file", file, file.name);
+  } else if (file instanceof Blob) {
+    formData.append("file", file, "upload.jpg");
+  } else {
+    console.error("⚠️ file이 Blob/File 객체가 아닙니다:", file);
+    throw new Error("Lambda 업로드 실패: 잘못된 파일 객체");
+  }
+
+  formData.append("folder", folder);
+
+  console.log("📤 Lambda 업로드 시작:", window.CONFIG.LAMBDA_UPLOAD_URL);
+
+  let resp;
+  try {
+    resp = await fetch(window.CONFIG.LAMBDA_UPLOAD_URL, {
+      method: "POST",
+      body: formData
+    });
+    console.log("📥 fetch 응답 도착:", resp.status);
+  } catch (err) {
+    console.error("❌ fetch 단계에서 실패:", err);
+    return;
+  }
+
+  let result;
+  try {
+    result = await resp.json();
+    console.log("📦 JSON 파싱 성공:", result);
+  } catch (err) {
+    console.error("❌ JSON 파싱 실패:", err);
+    return;
+  }
+
+  let parsedBody;
+  try {
+    parsedBody =
+      typeof result.body === "string"
+        ? JSON.parse(result.body)
+        : result.body || result;
+    console.log("🧩 parsedBody:", parsedBody);
+  } catch (err) {
+    console.error("❌ parsedBody 파싱 실패:", err);
+    return;
+  }
+
+  const uploadedUrl =
+    parsedBody?.data?.filePath ||
+    parsedBody?.filePath ||
+    parsedBody?.body?.data?.filePath ||
+    parsedBody?.body?.filePath ||
+    null;
+
+  if (!uploadedUrl) {
+    console.error("❌ Lambda 응답 구조 문제:", parsedBody);
+    throw new Error("Lambda 응답에 filePath 없음");
+  }
+
+  console.log("✅ 업로드 완료, URL:", uploadedUrl);
+  return uploadedUrl;
+}

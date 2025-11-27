@@ -7,7 +7,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => (window.location.href = '/login'), 800);
     return;
   }
-  await loadProfile();   // ← 중요: 실제로 호출!
+    await loadProfile();
+
+  // 프로필 이미지 변경 버튼 이벤트 연결
+  const avatarBtn = document.getElementById('avatarEditBtn');
+  const fileInput = document.getElementById('editProfileImage');
+  avatarBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const preview = document.getElementById('profileAvatar');
+    const reader = new FileReader();
+    reader.onload = (evt) => (preview.src = evt.target.result);
+    reader.readAsDataURL(file);
+  });
 });
 
 // 프로필 로드 (서버에서 최신 정보 조회)
@@ -47,14 +61,62 @@ async function loadProfile() {
   }
 }
 
-// 프로필 수정 (백엔드 API 필요)
-async function updateProfile() {
-    showAlert('프로필 수정 기능은 현재 개발 중입니다.', 'info');
+// 프로필 수정 
+async function handleProfileUpdate() {
+  const nickname = document.getElementById('profileNickname').value.trim();
+  const fileInput = document.getElementById('editProfileImage');
+  const imageFile = fileInput ? fileInput.files[0] : null;
+
+  let uploadedUrl = null;
+
+  if (imageFile) {
+    try {
+      uploadedUrl = await uploadToLambda(imageFile, "profile"); // 폴더 구분
+      console.log("S3 업로드 완료 URL:", uploadedUrl);
+    } catch (e) {
+      console.error(e);
+      showAlert('프로필 이미지 업로드 실패', 'error');
+      return;
+    }
+  }
+
+
+  const payload = {
+    nickname: nickname || null,
+    profileImageUrl: uploadedUrl || null
+  };
+
+  try {
+    const resp = await fetch(`${window.CONFIG.API_BASE_URL}/users/me`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`
+      },
+      body: JSON.stringify(payload),
+      credentials: 'include'
+    });
+
+    const json = await resp.json();
+    if (resp.ok && json.code === 'SUCCESS') {
+      showAlert('프로필이 업데이트되었습니다.', 'success');
+      
+      // 세션 / 네비게이션 갱신
+      const updatedUser = json.data;
+      sessionStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      updateNavigation();
+      loadProfile(); // 프로필 다시 로드
+    } else {
+      showAlert(json.message || '프로필 수정 중 오류 발생', 'error');
+    }
+  } catch (error) {
+    console.error('프로필 수정 오류:', error);
+    showAlert('서버 통신 오류가 발생했습니다.', 'error');
+  }
 }
 
-// 비밀번호 변경
 function goToChangePassword() {
-    window.location.href = '/change-password';
+  window.location.href = '/change-password';
 }
 
 // 회원 탈퇴 (백엔드 API 필요)

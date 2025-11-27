@@ -1,3 +1,5 @@
+const LAMBDA_UPLOAD_URL = window.CONFIG.LAMBDA_UPLOAD_URL;
+
 import {
   validateEmail, validateNickname, validatePassword, validatePasswordConfirm,
   debounce, wireImagePicker
@@ -361,7 +363,7 @@ async function checkFormValidity() {
     updateSignupButton();
 }
 
-// 회원가입 처리 - 사용자가 실제로 화원가입 버튼을 눌렀을 때 제출(검사->서버전송->결과처리)
+// 회원가입 처리 - 사용자가 실제로 화원가입 버튼을 눌렀을 때 제출
 async function handleSignup() {
     const signupBtn = document.getElementById('signupBtn');
     if( signupBtn.disabled ) return; // 이중 클릭 방지
@@ -394,18 +396,30 @@ async function handleSignup() {
     
     
     try {
-        const result = await userAPI.signup(email, password, nickname, profileImage);
-        
+
+        let uploadedUrl = null;
+
+        // 프로필 이미지가 있을 경우 Lambda로 먼저 업로드
+        if (profileImage) {
+            try {
+                uploadedUrl = await uploadToLambda(profileImage, "profile");
+                console.log('Lambda 업로드 결과 URL:', uploadedUrl);
+            } catch (e) {
+                console.error('Lambda 업로드 실패:', e);
+                showAlert('프로필 이미지 업로드 실패', 'error');
+                return; // 업로드 실패 시 더 진행하지 않음
+            }
+        }
+
+
+        // 백엔드에 회원가입 요청 (이미지 URL 포함)
+        const result = await userAPI.signup(email, password, nickname, uploadedUrl);
+
         if (result.success) {
             showAlert('회원가입 성공! 로그인 페이지로 이동합니다.', 'success');
-            
-            setTimeout(() => {
-                window.location.href = '/login';
-            }, 1000);
+            setTimeout(() => (window.location.href = '/login'), 1000);
         } else {
             showAlert(result.message || '회원가입에 실패했습니다.', 'error');
-            // signupBtn.textContent = originalText;
-            // signupBtn.disabled = false;
         }
     } catch (error) {
         console.error('회원가입 오류:', error);

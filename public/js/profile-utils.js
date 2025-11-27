@@ -1,5 +1,5 @@
 // === Validation rules ===
-export const NICK_REGEX = /^[a-zA-Z0-9가-힣_]{2,20}$/;
+window.NICK_REGEX = /^[a-zA-Z0-9가-힣_]{2,20}$/;
 
 export function validateEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
 export function validateNickname(v){

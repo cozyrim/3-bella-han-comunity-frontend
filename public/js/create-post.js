@@ -56,24 +56,58 @@ async function handleCreatePost(e) {
     submitBtn.disabled = true;
     
     try {
-        const result = await postAPI.createPost(title, content, images);
+        let uploadedUrls = [];
         
-        if (result.success) {
-            showAlert('게시글이 작성되었습니다.', 'success');
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 500);
-        } else {
-            showAlert(result.message || '게시글 작성에 실패했습니다.', 'error');
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
+        // ✅ Lambda를 통한 S3 업로드
+        if (images.length > 0) {
+            for (const file of images) {
+                try {
+                    const url = await uploadToLambda(file, "posts");
+                    uploadedUrls.push(url);
+                    console.log("업로드 성공:", url);
+                    } catch (err) {
+                    console.error("이미지 업로드 실패:", err);
+                    showAlert("이미지 업로드 중 오류가 발생했습니다.", "error");
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+            }
         }
-    } catch (error) {
-        console.error('게시글 작성 오류:', error);
-        showAlert('게시글 작성 중 오류가 발생했습니다.', 'error');
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
+
+    // ✅ 게시글 본문 + S3 이미지 URL 함께 전송
+    const payload = {
+        title,
+        content,
+      imageUrls: uploadedUrls, // S3 URL 리스트
+    };
+
+    const resp = await fetch(`${window.CONFIG.API_BASE_URL}/posts`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const json = await resp.json();
+
+    if (resp.ok && json.code === "SUCCESS") {
+        showAlert("게시글이 작성되었습니다.", "success");
+        setTimeout(() => {
+        window.location.href = "/";
+        }, 500);
+    } else {
+        showAlert(json.message || "게시글 작성에 실패했습니다.", "error");
     }
+    } catch (error) {
+      console.error("게시글 작성 오류:", error);
+      showAlert("게시글 작성 중 오류가 발생했습니다.", "error");
+    } finally {
+     submitBtn.textContent = originalText;
+     submitBtn.disabled = false;
+  }
 }
 
 // 이미지 미리보기

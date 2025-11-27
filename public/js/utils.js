@@ -1,5 +1,12 @@
 const DEFAULT_AVATAR_URL = '/files/avatar-default.png';
 
+// ==== 전역 환경 설정 ==== //
+window.CONFIG = {
+  API_BASE_URL: 'http://community-elb-243542493.ap-northeast-2.elb.amazonaws.com/api/v1',
+  LAMBDA_UPLOAD_URL: 'https://yw8frb7w1l.execute-api.ap-northeast-2.amazonaws.com/prod/upload'
+};
+
+
 // 알림 메시지 표시
 function showAlert(message, type = 'info') {
     const existingAlert = document.querySelector('.alert');

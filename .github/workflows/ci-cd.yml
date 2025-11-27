@@ -1,0 +1,44 @@
+name: FE Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+
+        steps:
+          - name: Checkout source code
+            uses: actions/checkout@v3
+
+          - name: Build Docker image
+            run: |
+              docker build -t fe-image:latest .
+
+          - name: Save Docker image as tar
+            run: |
+              docker save fe-image:latest -o fe-image.tar
+
+          - name: Copy Docker image to EC2
+            uses: appleboy/scp-action@v0.1.7
+            with:
+                host: ${{ secrets.EC2_HOST }}
+                username: ubuntu
+                key: ${{ secrets.EC2_FE_SSH_KEY }}
+                source: "fe-image.tar"
+                target: "/home/ubuntu"
+
+          - name: Deploy on EC2
+            uses: appleboy/ssh-action@v0.1.8
+            with:
+                host: ${{ secrets.EC2_HOST }}
+                username: ubuntu
+                key: ${{ secrets.EC2_FE_SSH_KEY }}
+                script: |
+                  docker load -i /home/ubuntu/fe-image.tar
+                  docker-compose -f /home/ubuntu/docker-compose.yml down
+                  docker-compose -f /home/ubuntu/docker-compose.yml up -d
+

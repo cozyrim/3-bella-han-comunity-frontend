@@ -1,7 +1,14 @@
+const dotenv = require('dotenv');
+const path = require('path');
+const envFile = process.env.NODE_ENV === 'production' ? '.env.prod' : '.env.local';
+dotenv.config({ path: path.join(__dirname, envFile) });
+console.log(`ENV Loaded: ${envFile}`);
+console.log('API_BASE_URL =', process.env.API_BASE_URL);
+
+
 // server.js - Express 서버 설정
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
-const path = require('path');
 const expressLayouts = require('express-ejs-layouts');
 const helmet = require('helmet');
 const compression = require('compression');
@@ -11,9 +18,34 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const API_BASE_URL = process.env.API_BASE_URL;
+const STATIC_URL = process.env.STATIC_URL;
+const LAMBDA_UPLOAD_URL = process.env.LAMBDA_UPLOAD_URL;
+
+
+// EJS 전역으로 환경 변수 전달
+app.locals.ENV = {
+  API_BASE_URL,
+  STATIC_URL,
+  LAMBDA_UPLOAD_URL,
+  MODE: process.env.NODE_ENV
+};
+
+// --- EJS 렌더링 전 주입
+app.use((req, res, next) => {
+  res.locals.__ENV__ = app.locals.ENV;
+  next();
+});
+
+// 뷰 엔진 설정
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+
+
 // 보안 설정
 app.use(helmet({
-    contentSecurityPolicy: false, // CSP는 추후 설정
+    contentSecurityPolicy: false,
 }));
 
 // 압축 미들웨어
@@ -25,21 +57,16 @@ app.use(morgan('dev'));
 // 쿠키 파서
 app.use(cookieParser());
 
-// ✅ 무조건 찍히는 사전 로깅 (프록시 앞)
-app.use('/api', (req, res, next) => {
-    console.log('[API-IN]', req.method, req.originalUrl);
-    next();
-});
 
 // API 프록시: /api -> 백엔드 (8080)
-// 주의: body parser 전에 등록해야 POST body를 백엔드로 전달 가능
+// body parser 전에 등록해야 POST body를 백엔드로 전달 가능
 app.use('/api', createProxyMiddleware({
-  target: 'http://community-elb-243542493.ap-northeast-2.elb.amazonaws.com/api',  // ★ /api 포함
+  target: process.env.API_BASE_URL,
   changeOrigin: true,
   xfwd: true,
   timeout: 60000,
   proxyTimeout: 60000,
-  pathRewrite: { '^/api': '' },         // ★ '/api/v1' 유지됨
+  pathRewrite: { '^/api': '' },
   cookieDomainRewrite: 'localhost',
   cookiePathRewrite: '/',
   logLevel: 'debug',
@@ -55,9 +82,10 @@ app.use('/api', createProxyMiddleware({
   }
 }));
 
-// 파일 프록시
+
+// 파일 프록시 
 app.use('/files', createProxyMiddleware({
-    target: 'http://localhost:8080',
+    target: API_BASE_URL,
     changeOrigin: true,
     timeout: 60000
 }));

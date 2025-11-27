@@ -1,0 +1,4 @@
+window.ENV = window.__ENV__;
+window.API_BASE_URL = ENV.API_BASE_URL;
+window.STATIC_URL = ENV.STATIC_URL;
+window.LAMBDA_UPLOAD_URL = ENV.LAMBDA_UPLOAD_URL;
