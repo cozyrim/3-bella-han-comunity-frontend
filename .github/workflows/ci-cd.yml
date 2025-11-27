@@ -1,44 +1,44 @@
-name: FE Deploy to EC2
+name: FE CI/CD
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
-    deploy:
-        runs-on: ubuntu-latest
+  build-and-push:
+    runs-on: ubuntu-latest
 
-        steps:
-          - name: Checkout source code
-            uses: actions/checkout@v3
+    steps:
+      - uses: actions/checkout@v3
 
-          - name: Build Docker image
-            run: |
-              docker build -t fe-image:latest .
+      - name: Docker login
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
 
-          - name: Save Docker image as tar
-            run: |
-              docker save fe-image:latest -o fe-image.tar
+      - name: Build FE image
+        run: |
+          docker build -t ${{ secrets.REGISTRY_URL }}/frontend:latest .
 
-          - name: Copy Docker image to EC2
-            uses: appleboy/scp-action@v0.1.7
-            with:
-                host: ${{ secrets.EC2_HOST }}
-                username: ubuntu
-                key: ${{ secrets.EC2_FE_SSH_KEY }}
-                source: "fe-image.tar"
-                target: "/home/ubuntu"
+      - name: Push FE image
+        run: |
+          docker push ${{ secrets.REGISTRY_URL }}/frontend:latest
 
-          - name: Deploy on EC2
-            uses: appleboy/ssh-action@v0.1.8
-            with:
-                host: ${{ secrets.EC2_HOST }}
-                username: ubuntu
-                key: ${{ secrets.EC2_FE_SSH_KEY }}
-                script: |
-                  docker load -i /home/ubuntu/fe-image.tar
-                  docker-compose -f /home/ubuntu/docker-compose.yml down
-                  docker-compose -f /home/ubuntu/docker-compose.yml up -d
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
 
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu
+            docker compose pull
+            docker compose up -d
