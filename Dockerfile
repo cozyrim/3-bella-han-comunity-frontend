@@ -11,6 +11,7 @@ RUN npm install
 # 앱 소스 복사
 COPY . .
 
+COPY .env.prod .env
 # 환경 변수
 ENV NODE_ENV=production
 EXPOSE 3000
