@@ -34,7 +34,7 @@ function initLogoutButton() {
 }
 
 // 네비게이션 업데이트
-function updateNavigation(isLoggedInParm) {
+function updateNavigation(isLoggedInParam) {
     const loginLink = document.getElementById('loginLink');
     const signupLink = document.getElementById('signupLink');
     const profileLink = document.getElementById('profileLink');

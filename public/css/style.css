@@ -929,10 +929,12 @@ body {
   background:#f8f9fb;
   display:flex; align-items:center; justify-content:center;
   margin:0 0 16px 0;
+  cursor: pointer; /* 프로필 영역 전체를 클릭 가능하게 */
 }
 .profile-avatar img{
   width:100%; height:100%; object-fit:cover;
   display:block;
+  cursor: pointer; /* 이미지 자체도 클릭 가능 */
 }
 .avatar-edit-btn{
   position:absolute; bottom:8px; right:8px;

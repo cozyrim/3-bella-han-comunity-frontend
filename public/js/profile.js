@@ -7,21 +7,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => (window.location.href = '/login'), 800);
     return;
   }
-    await loadProfile();
+  await loadProfile();
 
-  // 프로필 이미지 변경 버튼 이벤트 연결
+  // 프로필 이미지 변경 버튼 / 이미지 클릭 시 파일 선택창 열기
   const avatarBtn = document.getElementById('avatarEditBtn');
   const fileInput = document.getElementById('editProfileImage');
-  avatarBtn.addEventListener('click', () => fileInput.click());
+  const avatarImg = document.getElementById('profileAvatar');
 
-  fileInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const preview = document.getElementById('profileAvatar');
-    const reader = new FileReader();
-    reader.onload = (evt) => (preview.src = evt.target.result);
-    reader.readAsDataURL(file);
-  });
+  if (avatarBtn && fileInput) {
+    avatarBtn.addEventListener('click', () => fileInput.click());
+  }
+
+  if (avatarImg && fileInput) {
+    // 프로필 이미지를 클릭해도 파일 선택 가능
+    avatarImg.addEventListener('click', () => fileInput.click());
+  }
+
+  if (fileInput) {
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const preview = document.getElementById('profileAvatar');
+      const reader = new FileReader();
+      reader.onload = (evt) => (preview.src = evt.target.result);
+      reader.readAsDataURL(file);
+    });
+  }
 });
 
 // 프로필 로드 (서버에서 최신 정보 조회)

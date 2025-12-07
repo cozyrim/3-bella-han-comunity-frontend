@@ -8,12 +8,19 @@ document.addEventListener('DOMContentLoaded', function() {
 // 비밀번호 변경 페이지 인증 확인
 async function checkAuthForPasswordChange() {
     try {
-        const response = await fetch(`${API_BASE_URL}/users/me`, {
+        // 로그인 여부 확인: JWT 토큰을 포함해서 현재 사용자 조회
+        const baseUrl = window.CONFIG?.API_BASE_URL || (typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/api/v1');
+        const token = sessionStorage.getItem('accessToken');
+
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(`${baseUrl}/users/me`, {
             method: 'GET',
             credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json'
-            }
+            headers
         });
         
         if (!response.ok) {
@@ -63,7 +70,8 @@ document.getElementById('changePasswordForm').addEventListener('submit', async f
     }
     
     try {
-        const response = await fetch(`${window.CONFIG.API_BASE_URL}/users/me/password`, {
+        const baseUrl = window.CONFIG?.API_BASE_URL || (typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/api/v1');
+        const response = await fetch(`${baseUrl}/users/me/password`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
