@@ -324,7 +324,9 @@ window.commentsAPI.getCounts = async function (postIds) {
   }).then(res => res.success ? (res.data || {}) : {});
 };
 
-// Lambda 업로드 API 호출 함수
+// 이미지 업로드 API 호출 함수
+// - 기존 Lambda 경로(/api/upload) 대신 백엔드 파일 업로드 엔드포인트(/api/files/upload) 사용
+// - S3FileStorage 를 통해 S3에 업로드한 뒤 public URL 반환
 async function uploadToLambda(file, folder = "others") {
   const formData = new FormData();
 
@@ -334,63 +336,65 @@ async function uploadToLambda(file, folder = "others") {
     formData.append("file", file, "upload.jpg");
   } else {
     console.error("⚠️ file이 Blob/File 객체가 아닙니다:", file);
-    throw new Error("Lambda 업로드 실패: 잘못된 파일 객체");
+    throw new Error("이미지 업로드 실패: 잘못된 파일 객체");
   }
 
+  // 백엔드에서 폴더 구분을 위해 추가 (예: profile, posts)
   formData.append("folder", folder);
 
-  // Lambda 업로드를 Express 프록시를 통해 호출 (CORS 문제 해결)
-  // /api/upload → Express 서버 → Lambda 함수
-  const lambdaUrl = '/api/upload';
-  
-  console.log("📤 Lambda 업로드 시작 (프록시 경유):", lambdaUrl);
+  // 백엔드 파일 업로드 엔드포인트 호출
+  // 프론트 → Express(/api 프록시) → 백엔드(/api/files/upload)
+  const uploadUrl = "/api/files/upload";
+
+  console.log("📤 이미지 업로드 시작 (백엔드 경유):", uploadUrl);
+
+  const headers = {};
+  const token = getAccessToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
   let resp;
   try {
-    resp = await fetch(lambdaUrl, {
+    resp = await fetch(uploadUrl, {
       method: "POST",
       body: formData,
-      credentials: 'include' // 쿠키 전송 (필요한 경우)
+      headers,
+      credentials: "include",
     });
-    console.log("📥 fetch 응답 도착:", resp.status);
+    console.log("📥 업로드 응답 상태:", resp.status);
   } catch (err) {
-    console.error("❌ fetch 단계에서 실패:", err);
-    return;
+    console.error("❌ 업로드 요청 실패:", err);
+    throw new Error("이미지 업로드 요청 중 오류가 발생했습니다.");
   }
 
-  let result;
+  if (!resp.ok) {
+    console.error("❌ 업로드 실패 상태 코드:", resp.status);
+    const text = await resp.text().catch(() => "");
+    console.error("❌ 업로드 실패 응답 텍스트:", text);
+    throw new Error("이미지 업로드에 실패했습니다.");
+  }
+
+  let data;
   try {
-    result = await resp.json();
-    console.log("📦 JSON 파싱 성공:", result);
+    data = await resp.json();
+    console.log("📦 업로드 응답 JSON:", data);
   } catch (err) {
-    console.error("❌ JSON 파싱 실패:", err);
-    return;
+    console.error("❌ 업로드 응답 JSON 파싱 실패:", err);
+    throw new Error("이미지 업로드 응답을 해석하지 못했습니다.");
   }
 
-  let parsedBody;
-  try {
-    parsedBody =
-      typeof result.body === "string"
-        ? JSON.parse(result.body)
-        : result.body || result;
-    console.log("🧩 parsedBody:", parsedBody);
-  } catch (err) {
-    console.error("❌ parsedBody 파싱 실패:", err);
-    return;
-  }
-
-  const uploadedUrl =
-    parsedBody?.data?.filePath ||
-    parsedBody?.filePath ||
-    parsedBody?.body?.data?.filePath ||
-    parsedBody?.body?.filePath ||
+  // 백엔드가 Map<String,String> 또는 ApiResponse<Map<String,String>> 둘 다 지원 가능하도록 처리
+  const url =
+    data?.data?.url || // ApiResponse<{ url }>
+    data?.url || // Map<String,String>
     null;
 
-  if (!uploadedUrl) {
-    console.error("❌ Lambda 응답 구조 문제:", parsedBody);
-    throw new Error("Lambda 응답에 filePath 없음");
+  if (!url) {
+    console.error("❌ 업로드 응답에 URL 없음:", data);
+    throw new Error("이미지 업로드 응답에 URL 정보가 없습니다.");
   }
 
-  console.log("✅ 업로드 완료, URL:", uploadedUrl);
-  return uploadedUrl;
+  console.log("✅ 업로드 완료, URL:", url);
+  return url;
 }

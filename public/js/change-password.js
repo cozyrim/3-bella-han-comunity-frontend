@@ -87,11 +87,11 @@ document.getElementById('changePasswordForm').addEventListener('submit', async f
         const json = await response.json();
         
         if (response.ok && json.code === 'SUCCESS') {
-            showAlert('비밀번호가 변경되었습니다. 다시 로그인해주세요.', 'success');
+            showAlert('비밀번호가 변경되었습니다. 홈 화면으로 이동합니다.', 'success');
             // 비밀번호 변경 후 로그아웃 처리
             sessionStorage.clear();
             setTimeout(() => {
-                location.href = '/login';
+                location.href = '/';
             }, 1500);
         } else {
             showAlert(json.message || '비밀번호 변경에 실패했습니다.', 'error');
