@@ -414,7 +414,7 @@ async function handleSignup() {
 
         // 백엔드에 회원가입 요청 (이미지 URL 포함)
         const result = await userAPI.signup(email, password, nickname, uploadedUrl);
-
+            console.log(result);
         if (result.success) {
             showAlert('회원가입 성공! 로그인 페이지로 이동합니다.', 'success');
             setTimeout(() => (window.location.href = '/login'), 1000);
