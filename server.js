@@ -18,17 +18,20 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const API_BASE_URL = process.env.API_BASE_URL;
+// 백엔드 API 서버(프록시 타깃)는 서버용 ENV로만 사용
+const API_PROXY_TARGET = process.env.API_BASE_URL; // 예: http://backend:8080
 const STATIC_URL = process.env.STATIC_URL;
 const LAMBDA_UPLOAD_URL = process.env.LAMBDA_UPLOAD_URL;
 
 
-// EJS 전역으로 환경 변수 전달
+// EJS 전역으로 환경 변수 전달 (클라이언트용 값만 노출)
+// - API_BASE_URL: 브라우저에서 호출할 프록시 경로 (/api/v1)
+// - STATIC_URL: S3 퍼블릭 URL (이미지 베이스 경로)
 app.locals.ENV = {
-  API_BASE_URL,
+  API_BASE_URL: '/api/v1',
   STATIC_URL,
   LAMBDA_UPLOAD_URL,
-  MODE: process.env.NODE_ENV
+  MODE: process.env.NODE_ENV,
 };
 
 // --- EJS 렌더링 전 주입
@@ -61,7 +64,7 @@ app.use(cookieParser());
 // API 프록시: /api -> 백엔드 (8080)
 // body parser 전에 등록해야 POST body를 백엔드로 전달 가능
 app.use('/api', createProxyMiddleware({
-  target: process.env.API_BASE_URL,
+  target: API_PROXY_TARGET,
   changeOrigin: true,
   xfwd: true,
   timeout: 60000,
