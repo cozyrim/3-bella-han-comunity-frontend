@@ -55,7 +55,10 @@ document.addEventListener('DOMContentLoaded', function() {
             inputEl: profileImageInput,
             previewContainerEl: document.getElementById('profileImagePreview'),
             helperEl: document.getElementById('profileHelper'),
-            onValid(file){ /* 제출 시 같이 쓸 file – 필요하면 전역에 저장해도 됨 */ },
+            onValid(file){ 
+                console.log('✅ 프로필 이미지 선택됨:', file.name, file.size, 'bytes');
+                // 파일이 제대로 선택되었는지 확인
+            },
             onInvalid(msg){ showAlert(msg, 'error'); }
         });
     } else {
@@ -397,8 +400,11 @@ async function handleSignup() {
     const email = document.getElementById('signupEmail').value.trim();
     const password = document.getElementById('signupPassword').value;
     const nickname = document.getElementById('signupNickname').value.trim();
-    const profileImage = document.getElementById('profileImage').files[0];
+    const profileImageInput = document.getElementById('profileImage');
+    const profileImage = profileImageInput ? profileImageInput.files[0] : null;
     
+    console.log('📝 회원가입 시작:', { email, nickname, hasImage: !!profileImage, imageName: profileImage?.name });
+
     const originalText = signupBtn.textContent;
     signupBtn.textContent = '가입 중...';
     signupBtn.disabled = true;
@@ -408,22 +414,34 @@ async function handleSignup() {
 
         let uploadedUrl = null;
 
-        // 프로필 이미지가 있을 경우 Lambda로 먼저 업로드
+        // 프로필 이미지가 있을 경우 먼저 업로드
         if (profileImage) {
+            console.log('📤 프로필 이미지 업로드 시작:', profileImage.name, profileImage.size, 'bytes');
             try {
                 uploadedUrl = await uploadToLambda(profileImage, "profile");
-                console.log('Lambda 업로드 결과 URL:', uploadedUrl);
+                console.log('✅ 이미지 업로드 완료, URL:', uploadedUrl);
+                
+                // 업로드된 URL이 없으면 에러
+                if (!uploadedUrl || uploadedUrl.trim() === '') {
+                    throw new Error('이미지 업로드는 성공했지만 URL을 받지 못했습니다.');
+                }
             } catch (e) {
-                console.error('Lambda 업로드 실패:', e);
-                showAlert('프로필 이미지 업로드 실패', 'error');
+                console.error('❌ 이미지 업로드 실패:', e);
+                showAlert('프로필 이미지 업로드에 실패했습니다: ' + e.message, 'error');
+                signupBtn.textContent = originalText;
+                signupBtn.disabled = false;
+                _isSubmitting = false;
                 return; // 업로드 실패 시 더 진행하지 않음
             }
+        } else {
+            console.log('ℹ️ 프로필 이미지가 선택되지 않았습니다. 기본 이미지로 회원가입합니다.');
         }
 
-
         // 백엔드에 회원가입 요청 (이미지 URL 포함)
+        console.log('📤 회원가입 API 호출:', { email, nickname, profileImageUrl: uploadedUrl });
         const result = await userAPI.signup(email, password, nickname, uploadedUrl);
-            console.log(result);
+        console.log('📥 회원가입 API 응답:', result);
+        
         if (result.success) {
             showAlert('회원가입 성공! 로그인 페이지로 이동합니다.', 'success');
             setTimeout(() => (window.location.href = '/login'), 1000);
