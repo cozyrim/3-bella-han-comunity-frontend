@@ -86,11 +86,13 @@ app.use('/api', createProxyMiddleware({
 }));
 
 
-// 파일 프록시 
+// 파일 프록시 (/files → 백엔드 파일 엔드포인트)
+// 현재 백엔드는 필요 시 S3 URL을 직접 내려주지만,
+// 과거 로컬 업로드 파일(/files/...)을 위해 프록시를 유지한다.
 app.use('/files', createProxyMiddleware({
-    target: API_BASE_URL,
-    changeOrigin: true,
-    timeout: 60000
+  target: API_PROXY_TARGET,
+  changeOrigin: true,
+  timeout: 60000,
 }));
 
 // body parser (프록시 이후 등록 - 프록시 경로는 제외)
