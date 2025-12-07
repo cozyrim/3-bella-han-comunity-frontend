@@ -1,7 +1,7 @@
 const API_BASE_URL = window.__ENV__?.API_BASE_URL || 'http://localhost:8080/api/v1';
 const STATIC_URL = window.__ENV__?.STATIC_URL || 'http://localhost:8080/files';
 const LAMBDA_UPLOAD_URL = window.__ENV__?.LAMBDA_UPLOAD_URL;
-// Access 토큰 저장/조회 유틸a
+// Access 토큰 저장/조회 유틸
 function getAccessToken() {
     return sessionStorage.getItem('accessToken');
 }
@@ -95,9 +95,15 @@ async function apiCall(endpoint, options = {}) {
       }
     }
 
-    // 403 처리
-    if (resp.status === 403) {
-      return { success: false, message: '접근 권한이 없습니다.', status: 403 };
+    // 에러 처리
+    if (!resp.ok) {
+      return {
+        success: false,
+        status: resp.status,
+        message: data?.message || '요청 처리 중 오류가 발생했습니다.',
+        code: data?.code || null,
+        raw: data
+      };
     }
 
     // 정상/에러 공통 포맷
