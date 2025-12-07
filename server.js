@@ -95,6 +95,30 @@ app.use('/files', createProxyMiddleware({
   timeout: 60000,
 }));
 
+// Lambda 업로드 프록시 (/api/upload → Lambda 함수)
+// CORS 문제 해결을 위해 Express 서버를 통해 프록시
+app.use('/api/upload', createProxyMiddleware({
+  target: process.env.LAMBDA_UPLOAD_URL || 'https://yw8frb7w1l.execute-api.ap-northeast-2.amazonaws.com/prod',
+  changeOrigin: true,
+  pathRewrite: { '^/api/upload': '/upload' },
+  timeout: 60000,
+  proxyTimeout: 60000,
+  onProxyReq(proxyReq, req) {
+    console.log('[LAMBDA PROXY→]', req.method, req.originalUrl);
+  },
+  onProxyRes(proxyRes, req) {
+    // CORS 헤더 추가
+    proxyRes.headers['Access-Control-Allow-Origin'] = '*';
+    proxyRes.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS';
+    proxyRes.headers['Access-Control-Allow-Headers'] = 'Content-Type';
+    console.log('[LAMBDA PROXY←]', req.method, req.originalUrl, '→', proxyRes.statusCode);
+  },
+  onError(err, req, res) {
+    console.error('[LAMBDA PROXY ERR]', req.method, req.originalUrl, '-', err.message);
+    res.status(500).json({ success: false, message: 'Lambda 업로드 오류', detail: err.message });
+  }
+}));
+
 // body parser (프록시 이후 등록 - 프록시 경로는 제외)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

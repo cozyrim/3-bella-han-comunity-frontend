@@ -102,6 +102,16 @@ async function apiCall(endpoint, options = {}) {
 
     // 에러 처리
     if (!resp.ok) {
+      // 403 Forbidden 디버깅
+      if (resp.status === 403) {
+        console.error('❌ 403 Forbidden:', {
+          endpoint,
+          method,
+          hasToken: !!sessionStorage.getItem('accessToken'),
+          tokenPreview: sessionStorage.getItem('accessToken')?.substring(0, 20) + '...',
+          responseData: data
+        });
+      }
       return {
         success: false,
         status: resp.status,
@@ -329,20 +339,18 @@ async function uploadToLambda(file, folder = "others") {
 
   formData.append("folder", folder);
 
-  // Lambda 업로드 URL 가져오기 (window.__ENV__ 우선, 없으면 window.CONFIG)
-  const lambdaUrl = window.__ENV__?.LAMBDA_UPLOAD_URL || 
-                    window.CONFIG?.LAMBDA_UPLOAD_URL || 
-                    'https://yw8frb7w1l.execute-api.ap-northeast-2.amazonaws.com/prod/upload';
+  // Lambda 업로드를 Express 프록시를 통해 호출 (CORS 문제 해결)
+  // /api/upload → Express 서버 → Lambda 함수
+  const lambdaUrl = '/api/upload';
   
-  console.log("📤 Lambda 업로드 시작:", lambdaUrl);
+  console.log("📤 Lambda 업로드 시작 (프록시 경유):", lambdaUrl);
 
   let resp;
   try {
     resp = await fetch(lambdaUrl, {
       method: "POST",
       body: formData,
-      // CORS 문제 해결을 위해 credentials 제거 (Lambda는 쿠키 불필요)
-      mode: 'cors'
+      credentials: 'include' // 쿠키 전송 (필요한 경우)
     });
     console.log("📥 fetch 응답 도착:", resp.status);
   } catch (err) {
