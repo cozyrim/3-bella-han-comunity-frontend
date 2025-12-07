@@ -206,20 +206,30 @@ window.postAPI = {
     },
     
     createPost: async (title, content, images = []) => {
-        const formData = new FormData();
+        // images가 File 객체 배열이면 FormData 사용, URL 문자열 배열이면 JSON 사용
+        const isFileArray = images.length > 0 && images[0] instanceof File;
         
-        const postData = { title, content };
-        formData.append('post', new Blob([JSON.stringify(postData)], { type: 'application/json' }));
-        
-        images.forEach(image => {
-            formData.append('images', image);
-        });
-        
-        return apiCall('/posts', {
-            method: 'POST',
-            body: formData,
-            isFormData: true
-        });
+        if (isFileArray) {
+            // 파일 업로드 방식 (FormData)
+            const formData = new FormData();
+            const postData = { title, content };
+            formData.append('post', new Blob([JSON.stringify(postData)], { type: 'application/json' }));
+            images.forEach(image => {
+                formData.append('images', image);
+            });
+            return apiCall('/posts', {
+                method: 'POST',
+                body: formData,
+                isFormData: true
+            });
+        } else {
+            // S3 URL 리스트 전송 방식 (JSON)
+            return apiCall('/posts', {
+                method: 'POST',
+                body: { title, content, imageUrls: images },
+                requiresAuth: true
+            });
+        }
     },
     
     updatePost: async (postId, title, content, newImages = [], removeImageIds = []) => {
@@ -319,13 +329,20 @@ async function uploadToLambda(file, folder = "others") {
 
   formData.append("folder", folder);
 
-  console.log("📤 Lambda 업로드 시작:", window.CONFIG.LAMBDA_UPLOAD_URL);
+  // Lambda 업로드 URL 가져오기 (window.__ENV__ 우선, 없으면 window.CONFIG)
+  const lambdaUrl = window.__ENV__?.LAMBDA_UPLOAD_URL || 
+                    window.CONFIG?.LAMBDA_UPLOAD_URL || 
+                    'https://yw8frb7w1l.execute-api.ap-northeast-2.amazonaws.com/prod/upload';
+  
+  console.log("📤 Lambda 업로드 시작:", lambdaUrl);
 
   let resp;
   try {
-    resp = await fetch(window.CONFIG.LAMBDA_UPLOAD_URL, {
+    resp = await fetch(lambdaUrl, {
       method: "POST",
-      body: formData
+      body: formData,
+      // CORS 문제 해결을 위해 credentials 제거 (Lambda는 쿠키 불필요)
+      mode: 'cors'
     });
     console.log("📥 fetch 응답 도착:", resp.status);
   } catch (err) {

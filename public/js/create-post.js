@@ -76,30 +76,16 @@ async function handleCreatePost(e) {
         }
 
     // ✅ 게시글 본문 + S3 이미지 URL 함께 전송
-    const payload = {
-        title,
-        content,
-      imageUrls: uploadedUrls, // S3 URL 리스트
-    };
-
-    const resp = await fetch(`${window.CONFIG.API_BASE_URL}/posts`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-        },
-        body: JSON.stringify(payload),
-    });
-
-    const json = await resp.json();
-
-    if (resp.ok && json.code === "SUCCESS") {
+    // apiCall 함수 사용 (프록시 경로 자동 처리)
+    const result = await postAPI.createPost(title, content, uploadedUrls);
+    
+    if (result.success) {
         showAlert("게시글이 작성되었습니다.", "success");
         setTimeout(() => {
-        window.location.href = "/";
+            window.location.href = "/";
         }, 500);
     } else {
-        showAlert(json.message || "게시글 작성에 실패했습니다.", "error");
+        showAlert(result.message || "게시글 작성에 실패했습니다.", "error");
     }
     } catch (error) {
       console.error("게시글 작성 오류:", error);
