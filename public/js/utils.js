@@ -4,10 +4,10 @@ const DEFAULT_AVATAR_URL = 'https://community-image-bucket-1116.s3.ap-northeast-
 // window.CONFIG는 더 이상 사용하지 않음 - window.__ENV__ 사용
 // 하위 호환성을 위해 window.CONFIG를 window.__ENV__로 매핑
 if (typeof window !== 'undefined' && window.__ENV__) {
-  window.CONFIG = {
+window.CONFIG = {
     API_BASE_URL: window.__ENV__.API_BASE_URL || '/api/v1',
     LAMBDA_UPLOAD_URL: window.__ENV__.LAMBDA_UPLOAD_URL || 'https://yw8frb7w1l.execute-api.ap-northeast-2.amazonaws.com/prod/upload'
-  };
+};
 }
 
 

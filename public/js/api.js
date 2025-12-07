@@ -222,16 +222,16 @@ window.postAPI = {
         if (isFileArray) {
             // 파일 업로드 방식 (FormData)
             const formData = new FormData();
-            const postData = { title, content };
-            formData.append('post', new Blob([JSON.stringify(postData)], { type: 'application/json' }));
-            images.forEach(image => {
-                formData.append('images', image);
-            });
-            return apiCall('/posts', {
-                method: 'POST',
-                body: formData,
-                isFormData: true
-            });
+        const postData = { title, content };
+        formData.append('post', new Blob([JSON.stringify(postData)], { type: 'application/json' }));
+        images.forEach(image => {
+            formData.append('images', image);
+        });
+        return apiCall('/posts', {
+            method: 'POST',
+            body: formData,
+            isFormData: true
+        });
         } else {
             // S3 URL 리스트 전송 방식 (JSON)
             return apiCall('/posts', {
