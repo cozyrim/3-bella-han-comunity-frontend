@@ -1,4 +1,4 @@
-const DEFAULT_AVATAR_URL = '/files/avatar-default.png';
+const DEFAULT_AVATAR_URL = 'https://community-image-bucket-1116.s3.ap-northeast-2.amazonaws.com/avatar-default.png';
 
 // ==== 전역 환경 설정 ==== //
 window.CONFIG = {
