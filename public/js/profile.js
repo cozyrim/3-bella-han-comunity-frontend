@@ -112,8 +112,6 @@ async function handleProfileUpdate() {
 
     const json = await resp.json();
     if (resp.ok && json.code === 'SUCCESS') {
-      showAlert('프로필이 업데이트되었습니다. 홈 화면으로 이동합니다.', 'success');
-      
       // 세션 / 네비게이션 갱신
       const updatedUser = json.data;
       
@@ -131,10 +129,14 @@ async function handleProfileUpdate() {
       // 네비게이션 즉시 갱신 (이미지 반영)
       updateNavigation(true);
       
-      // 홈 화면으로 리다이렉트
+      // 성공 메시지 표시 후 홈 화면으로 리다이렉트
+      showAlert('프로필이 업데이트되었습니다. 홈 화면으로 이동합니다.', 'success');
+      
+      // replace를 사용하여 히스토리에 남기지 않고 리다이렉트
       setTimeout(() => {
-        window.location.href = '/';
-      }, 1500);
+        window.location.replace('/');
+      }, 1000);
+      return; // 함수 즉시 종료
     } else {
       showAlert(json.message || '프로필 수정 중 오류 발생', 'error');
     }
