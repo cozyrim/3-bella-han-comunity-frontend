@@ -1,5 +1,5 @@
 window.__ENV__ = {
   API_BASE_URL: "/api/v1",
-  STATIC_URL: "https://community-image-bucket-1116/public/image/profile/",
+  STATIC_URL: "https://community-image-bucket-1116.s3.ap-northeast-2.amazonaws.com/",
   LAMBDA_UPLOAD_URL: "https://yw8frb7w1l.execute-api.ap-northeast-2.amazonaws.com/prod/upload"
 };

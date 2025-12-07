@@ -66,7 +66,7 @@ app.use('/api', createProxyMiddleware({
   xfwd: true,
   timeout: 60000,
   proxyTimeout: 60000,
-  pathRewrite: { '^/api': '' },
+  pathRewrite: (path) => path,  // 경로 그대로 전달 (/api/v1/posts → /api/v1/posts)
   cookieDomainRewrite: 'localhost',
   cookiePathRewrite: '/',
   logLevel: 'debug',
