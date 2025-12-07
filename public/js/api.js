@@ -343,8 +343,8 @@ async function uploadToLambda(file, folder = "others") {
   formData.append("folder", folder);
 
   // 백엔드 파일 업로드 엔드포인트 호출
-  // 프론트 → Express(/api 프록시) → 백엔드(/api/files/upload)
-  const uploadUrl = "/api/files/upload";
+  // 프론트 → Express(/api 프록시) → 백엔드(/api/v1/files/upload)
+  const uploadUrl = "/api/v1/files/upload";
 
   console.log("📤 이미지 업로드 시작 (백엔드 경유):", uploadUrl);
 
