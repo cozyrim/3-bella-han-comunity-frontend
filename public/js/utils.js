@@ -268,7 +268,7 @@ function updateNavigation() {
 
     const avatar = document.getElementById('navAvatar');
     if (avatar) {
-      const url = resolveAvatarUrl(user?.userProfileUrl); // ← 키 통일!
+      const url = resolveAvatarUrl(user?.profileImageUrl || user?.userProfileUrl); // ← 키 통일!
       avatar.src = url;
       avatar.onerror = () => { avatar.src = DEFAULT_AVATAR_URL; };
     }

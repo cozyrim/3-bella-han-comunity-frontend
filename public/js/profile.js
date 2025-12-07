@@ -40,7 +40,7 @@ async function loadProfile() {
 
 
     // 세션/상태 갱신
-    sessionStorage.setItem('currentUser', JSON.stringify(user));
+    sessionStorage.setItem('currentUser', JSON.stringify(normalized));
     currentUser = normalized;
     updateNavigation(true); // 네비 즉시 반영
 
