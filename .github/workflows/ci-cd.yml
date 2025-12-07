@@ -26,6 +26,16 @@ jobs:
           username: ${{ secrets.REGISTRY_USER }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
+      - name: Create .env.prod
+        run: |
+          cat > .env.prod << 'EOF'
+          NODE_ENV=production
+          PORT=3000
+          API_BASE_URL=${{ secrets.API_BASE_URL }}
+          STATIC_URL=${{ secrets.STATIC_URL }}
+          LAMBDA_UPLOAD_URL=${{ secrets.LAMBDA_UPLOAD_URL }}
+          EOF
+
       - name: Build FE image
         run: |
           docker build -t ${{ secrets.REGISTRY_HOST }}/frontend:latest .

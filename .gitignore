@@ -35,4 +35,4 @@ tmp/
 temp/
 *.tmp
 
-.env
+.env.env.prod
