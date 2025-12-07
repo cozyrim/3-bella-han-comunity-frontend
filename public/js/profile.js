@@ -62,7 +62,9 @@ async function loadProfile() {
     // ★ 프로필 아바타 채우기 (id 주의!)
     const img = document.getElementById('profileAvatar');
     if (img) {
-      img.src = normalized.profileImageUrl || DEFAULT_AVATAR_URL;
+      // resolveAvatarUrl 사용하여 localhost URL 자동 변환
+      const avatarUrl = resolveAvatarUrl(normalized.profileImageUrl || normalized.userProfileUrl);
+      img.src = avatarUrl;
       img.alt = normalized.nickname ?? '프로필';
       img.onerror = () => { img.onerror = null; img.src = DEFAULT_AVATAR_URL; };
     }
@@ -110,13 +112,29 @@ async function handleProfileUpdate() {
 
     const json = await resp.json();
     if (resp.ok && json.code === 'SUCCESS') {
-      showAlert('프로필이 업데이트되었습니다.', 'success');
+      showAlert('프로필이 업데이트되었습니다. 홈 화면으로 이동합니다.', 'success');
       
       // 세션 / 네비게이션 갱신
       const updatedUser = json.data;
-      sessionStorage.setItem('currentUser', JSON.stringify(updatedUser));
-      updateNavigation();
-      loadProfile(); // 프로필 다시 로드
+      
+      // 필드명 정규화 (profileImageUrl 또는 userProfileUrl 통일)
+      const normalized = {
+        ...updatedUser,
+        profileImageUrl: updatedUser.profileImageUrl || updatedUser.userProfileUrl || '',
+        userProfileUrl: updatedUser.userProfileUrl || updatedUser.profileImageUrl || ''
+      };
+      
+      // currentUser 전역 변수 업데이트 (main.js에서 사용)
+      currentUser = normalized;
+      sessionStorage.setItem('currentUser', JSON.stringify(normalized));
+      
+      // 네비게이션 즉시 갱신 (이미지 반영)
+      updateNavigation(true);
+      
+      // 홈 화면으로 리다이렉트
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1500);
     } else {
       showAlert(json.message || '프로필 수정 중 오류 발생', 'error');
     }

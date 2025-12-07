@@ -55,13 +55,10 @@ function updateNavigation(isLoggedInParam) {
             profileLink.href = '/profile'; // 클릭하면 프로필 페이지
 
             // 현재 유저의 이미지가 있으면 사용, 없으면 기본 이미지
-            // localhost URL이면 S3 기본 이미지로 변환
-            let src = (currentUser?.profileImageUrl || currentUser?.userProfileUrl || DEFAULT_AVATAR_URL);
-            if (src && (src.includes('localhost:8080') || src.includes('127.0.0.1:8080'))) {
-                src = DEFAULT_AVATAR_URL;
-            }
+            // resolveAvatarUrl 함수 사용 (localhost URL 자동 변환)
+            const src = resolveAvatarUrl(currentUser?.profileImageUrl || currentUser?.userProfileUrl);
             if (navAvatar) {
-                navAvatar.src = src || DEFAULT_AVATAR_URL;
+                navAvatar.src = src;
                 navAvatar.alt = currentUser?.nickname || '프로필';
                 navAvatar.onerror = () => { navAvatar.onerror = null; navAvatar.src = DEFAULT_AVATAR_URL; };
             }
