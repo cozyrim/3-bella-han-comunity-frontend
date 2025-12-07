@@ -2,6 +2,9 @@
 
 Spring Boot 백엔드와 연동되는 커뮤니티 프론트엔드 프로젝트입니다.
 
+### 커뮤니티 바로가기
+https://community-a-feast-of.n-e.kr/
+
 ### 시연 영상
 https://drive.google.com/file/d/1HH1I-RAZ8O5SP3cmMB1hxNsOlXyn7bTF/view?usp=sharing
 
