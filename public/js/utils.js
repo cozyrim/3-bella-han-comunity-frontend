@@ -258,7 +258,14 @@ function formatDateTime(isoOrMs){
 }
 
 function resolveAvatarUrl(url) {
-  return (url && typeof url === 'string') ? url : DEFAULT_AVATAR_URL;
+  if (!url || typeof url !== 'string') {
+    return DEFAULT_AVATAR_URL;
+  }
+  // localhost URL이면 S3 기본 이미지로 변환 (배포 환경에서 localhost 접근 불가)
+  if (url.includes('localhost:8080') || url.includes('127.0.0.1:8080')) {
+    return DEFAULT_AVATAR_URL;
+  }
+  return url;
 }
 // 네비게이션 아바타/닉네임 갱신 (세션 기반)
 function updateNavigation() {

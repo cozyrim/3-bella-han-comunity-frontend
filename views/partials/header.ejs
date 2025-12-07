@@ -15,11 +15,11 @@
            style="<%= typeof isLoggedIn !== 'undefined' && isLoggedIn ? '' : 'display:none;' %>"
            title="<%= (typeof currentUser !== 'undefined' && currentUser && currentUser.nickname) ? currentUser.nickname : '내 프로필' %>">
           <img id="navAvatar" class="nav-avatar"
-               src="<%= (typeof currentUser !== 'undefined' && currentUser && currentUser.profileImageUrl)
-                        ? currentUser.profileImageUrl
-                        : '/images/avatar-default.png' %>"
+               src="<%= (typeof currentUser !== 'undefined' && currentUser && (currentUser.profileImageUrl || currentUser.userProfileUrl))
+                        ? (currentUser.profileImageUrl || currentUser.userProfileUrl)
+                        : 'https://community-image-bucket-1116.s3.ap-northeast-2.amazonaws.com/avatar-default.png' %>"
                alt="프로필 이미지"
-               onerror="this.onerror=null;this.src='images/avatar-default.png'">
+               onerror="this.onerror=null;this.src='https://community-image-bucket-1116.s3.ap-northeast-2.amazonaws.com/avatar-default.png'">
           <span class="sr-only">내 프로필</span>
         </a>
                 

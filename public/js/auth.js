@@ -1,4 +1,5 @@
 const LAMBDA_UPLOAD_URL = window.CONFIG.LAMBDA_UPLOAD_URL;
+const DEFAULT_AVATAR_URL = window.DEFAULT_AVATAR_URL || 'https://community-image-bucket-1116.s3.ap-northeast-2.amazonaws.com/avatar-default.png';
 
 import {
   validateEmail, validateNickname, validatePassword, validatePasswordConfirm,
@@ -100,7 +101,15 @@ async function handleLogin() {
             const token = loginResp?.accessToken;
 
             if (token) sessionStorage.setItem('accessToken', token);
-            if (user)  sessionStorage.setItem('currentUser', JSON.stringify(user));
+            // localhost URL을 S3 URL로 변환
+            if (user) {
+                const profileUrl = user.profileImageUrl || user.userProfileUrl;
+                if (profileUrl && (profileUrl.includes('localhost:8080') || profileUrl.includes('127.0.0.1:8080'))) {
+                    user.profileImageUrl = DEFAULT_AVATAR_URL;
+                    user.userProfileUrl = DEFAULT_AVATAR_URL;
+                }
+                sessionStorage.setItem('currentUser', JSON.stringify(user));
+            }
 
             showAlert('로그인 성공!', 'success');
 
