@@ -196,7 +196,8 @@ function renderImageSlider(images, container) {
     images.forEach((image, index) => {
         if (image.url) {
             const img = document.createElement('img');
-            img.src = image.url;
+            // localhost URL을 S3 URL로 변환
+            img.src = resolveImageUrl(image.url) || image.url;
             img.alt = `이미지 ${index + 1}`;
             img.className = 'slider-image';
             img.style.width = '100%';

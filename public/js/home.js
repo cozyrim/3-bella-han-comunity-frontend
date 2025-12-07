@@ -174,7 +174,7 @@ function createPostElement(post) {
   </div>
 
   ${post.primaryImageUrl ? 
-    `<img src="${post.primaryImageUrl}" alt="게시글 이미지" 
+    `<img src="${resolveImageUrl(post.primaryImageUrl) || post.primaryImageUrl}" alt="게시글 이미지" 
           class="post-item-image" onerror="this.style.display='none'" 
           style="margin-top: 10px;">` 
     : ''}

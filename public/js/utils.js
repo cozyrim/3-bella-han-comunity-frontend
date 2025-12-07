@@ -271,6 +271,25 @@ function resolveAvatarUrl(url) {
   }
   return url;
 }
+
+// 게시글 이미지 URL 변환 (localhost → S3)
+function resolveImageUrl(url) {
+  if (!url || typeof url !== 'string') {
+    return null;
+  }
+  // localhost URL이면 S3 URL로 변환
+  // http://localhost:8080/files/abc123.jpg → S3 URL로 변환 필요
+  if (url.includes('localhost:8080/files/') || url.includes('127.0.0.1:8080/files/')) {
+    // 파일명 추출
+    const fileName = url.split('/').pop();
+    // S3 기본 URL 사용 (STATIC_URL 환경변수에서 가져오거나 기본값)
+    const staticUrl = window.__ENV__?.STATIC_URL || 
+                      'https://community-image-bucket-1116.s3.ap-northeast-2.amazonaws.com/';
+    // S3 경로: public/image/post/파일명
+    return staticUrl + 'public/image/post/' + fileName;
+  }
+  return url;
+}
 // 네비게이션 아바타/닉네임 갱신 (세션 기반)
 function updateNavigation() {
   try {
@@ -300,5 +319,6 @@ window.getCookie         = getCookie;
 window.getCsrfHeaders    = getCsrfHeaders;
 
 window.resolveAvatarUrl  = resolveAvatarUrl;
+window.resolveImageUrl   = resolveImageUrl;
 window.updateNavigation  = updateNavigation;
 window.DEFAULT_AVATAR_URL = DEFAULT_AVATAR_URL;
