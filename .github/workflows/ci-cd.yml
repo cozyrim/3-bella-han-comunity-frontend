@@ -4,63 +4,38 @@ on:
   push:
     branches: [ main ]
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: cozyrim/community-frontend
-
 jobs:
-  build-and-push:
+  # 1단계: Node 빌드는 GitHub에서 수행
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
-
-      - name: Build application
+      - name: Build Frontend
         run: |
           npm install
+          # 만약 build 스크립트가 있다면 실행 (없으면 생략 가능)
           npm run build --if-present
-
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
+      - name: Upload Build Folder
+        uses: actions/upload-artifact@v4
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          name: frontend-dist
+          path: . # 전체 폴더를 업로드
 
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: linux/arm64
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
+  # 2단계: 배포만 라즈베리파이에서 수행
   deploy:
-    needs: build-and-push
-    runs-on: [self-hosted, linux, arm64]
-    if: github.ref == 'refs/heads/main'
-
+    needs: build
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Login to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Deploy
+      - name: Download Build Folder
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: .
+      - name: Build Image and Deploy
         run: |
-          # 프론트엔드 이미지만 pull 받고 실행합니다.
-          docker compose -p community -f docker-compose.yml pull frontend
-          docker compose -p community -f docker-compose.yml up -d frontend
+          docker build -t community-frontend:latest .
+          docker compose -p community up -d frontend
           docker system prune -f
