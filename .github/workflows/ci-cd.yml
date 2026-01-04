@@ -27,7 +27,8 @@ jobs:
   # 2단계: 배포만 라즈베리파이에서 수행
   deploy:
     needs: build
-    runs-on: self-hosted
+    runs-on: [self-hosted, linux, arm64]
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Download Build Folder
         uses: actions/download-artifact@v4
