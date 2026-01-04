@@ -1,0 +1,12 @@
+services:
+  frontend:
+    image: ghcr.io/cozyrim/community-frontend:latest
+    container_name: community-frontend
+    restart: unless-stopped
+    # ports 제거: Nginx를 통해서만 접근 가능하도록 설정
+    networks:
+      - community-network
+
+networks:
+  community-network:
+    external: true

@@ -339,7 +339,7 @@ async function uploadToLambda(file, folder = "others") {
     throw new Error("이미지 업로드 실패: 잘못된 파일 객체");
   }
 
-  // 백엔드에서 폴더 구분을 위해 추가 (예: profile, posts)
+  // 백엔드에서 폴더 구분을 위해 추가 
   formData.append("folder", folder);
 
   // 백엔드 파일 업로드 엔드포인트 호출
