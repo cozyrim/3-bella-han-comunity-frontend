@@ -19,9 +19,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // 백엔드 API 서버(프록시 타깃)는 서버용 ENV로만 사용
-const API_PROXY_TARGET = process.env.API_BASE_URL; // 예: http://backend:8080
-const STATIC_URL = process.env.STATIC_URL;
-const LAMBDA_UPLOAD_URL = process.env.LAMBDA_UPLOAD_URL;
+const API_PROXY_TARGET = process.env.API_BASE_URL || 'http://backend:8080';
+const STATIC_URL = process.env.STATIC_URL || '/uploads/';
+const LAMBDA_UPLOAD_URL = process.env.LAMBDA_UPLOAD_URL || '/api/v1/files/upload';
 
 
 // EJS 전역으로 환경 변수 전달 (클라이언트용 값만 노출)
@@ -87,35 +87,28 @@ app.use('/api', createProxyMiddleware({
 
 
 // 파일 프록시 (/files → 백엔드 파일 엔드포인트)
-// 현재 백엔드는 필요 시 S3 URL을 직접 내려주지만,
-// 과거 로컬 업로드 파일(/files/...)을 위해 프록시를 유지한다.
 app.use('/files', createProxyMiddleware({
   target: API_PROXY_TARGET,
   changeOrigin: true,
   timeout: 60000,
 }));
 
-// Lambda 업로드 프록시 (/api/upload → Lambda 함수)
-// CORS 문제 해결을 위해 Express 서버를 통해 프록시
+// 파일 업로드 프록시 (/api/upload → 백엔드 로컬 업로드)
 app.use('/api/upload', createProxyMiddleware({
-  target: process.env.LAMBDA_UPLOAD_URL || 'https://yw8frb7w1l.execute-api.ap-northeast-2.amazonaws.com/prod',
+  target: API_PROXY_TARGET, // 백엔드 서버
   changeOrigin: true,
-  pathRewrite: { '^/api/upload': '/upload' },
+  pathRewrite: { '^/api/upload': '/api/v1/files/upload' }, // 백엔드의 로컬 업로드 경로로 매핑
   timeout: 60000,
   proxyTimeout: 60000,
   onProxyReq(proxyReq, req) {
-    console.log('[LAMBDA PROXY→]', req.method, req.originalUrl);
+    console.log('[UPLOAD PROXY→]', req.method, req.originalUrl);
   },
   onProxyRes(proxyRes, req) {
-    // CORS 헤더 추가
-    proxyRes.headers['Access-Control-Allow-Origin'] = '*';
-    proxyRes.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS';
-    proxyRes.headers['Access-Control-Allow-Headers'] = 'Content-Type';
-    console.log('[LAMBDA PROXY←]', req.method, req.originalUrl, '→', proxyRes.statusCode);
+    console.log('[UPLOAD PROXY←]', req.method, req.originalUrl, '→', proxyRes.statusCode);
   },
   onError(err, req, res) {
-    console.error('[LAMBDA PROXY ERR]', req.method, req.originalUrl, '-', err.message);
-    res.status(500).json({ success: false, message: 'Lambda 업로드 오류', detail: err.message });
+    console.error('[UPLOAD PROXY ERR]', req.method, req.originalUrl, '-', err.message);
+    res.status(500).json({ success: false, message: '파일 업로드 오류', detail: err.message });
   }
 }));
 

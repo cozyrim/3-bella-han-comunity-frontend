@@ -1,5 +1,5 @@
 const LAMBDA_UPLOAD_URL = window.CONFIG.LAMBDA_UPLOAD_URL;
-const DEFAULT_AVATAR_URL = window.DEFAULT_AVATAR_URL || 'https://community-image-bucket-1116.s3.ap-northeast-2.amazonaws.com/avatar-default.png';
+const DEFAULT_AVATAR_URL = window.DEFAULT_AVATAR_URL || '/images/avatar-default.png';
 
 import {
   validateEmail, validateNickname, validatePassword, validatePasswordConfirm,

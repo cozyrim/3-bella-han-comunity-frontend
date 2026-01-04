@@ -1,4 +1,4 @@
-const DEFAULT_AVATAR_URL = 'https://community-image-bucket-1116.s3.ap-northeast-2.amazonaws.com/avatar-default.png';
+const DEFAULT_AVATAR_URL = '/images/avatar-default.png';
 
 // ==== 전역 환경 설정 (window.__ENV__ 사용) ==== //
 // window.CONFIG는 더 이상 사용하지 않음 - window.__ENV__ 사용
@@ -283,8 +283,7 @@ function resolveImageUrl(url) {
     // 파일명 추출
     const fileName = url.split('/').pop();
     // S3 기본 URL 사용 (STATIC_URL 환경변수에서 가져오거나 기본값)
-    const staticUrl = window.__ENV__?.STATIC_URL || 
-                      'https://community-image-bucket-1116.s3.ap-northeast-2.amazonaws.com/';
+    const staticUrl = window.__ENV__?.STATIC_URL || '/uploads';
     // S3 경로: public/image/post/파일명
     return staticUrl + 'public/image/post/' + fileName;
   }

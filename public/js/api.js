@@ -2,10 +2,8 @@
 // - 배포 환경: window.__ENV__ 값 사용 (Express에서 주입)
 // - 로컬/비정상 환경: 안전한 기본값(/api/v1, S3 URL) 사용
 const API_BASE_URL = window.__ENV__?.API_BASE_URL || '/api/v1';
-const STATIC_URL =
-  window.__ENV__?.STATIC_URL ||
-  'https://community-image-bucket-1116.s3.ap-northeast-2.amazonaws.com/';
-const LAMBDA_UPLOAD_URL = window.__ENV__?.LAMBDA_UPLOAD_URL;
+const STATIC_URL = window.__ENV__?.STATIC_URL || '/uploads';
+const LAMBDA_UPLOAD_URL = window.__ENV__?.LAMBDA_UPLOAD_URL || '/api/v1/files/upload';
 // Access 토큰 저장/조회 유틸
 function getAccessToken() {
     return sessionStorage.getItem('accessToken');
