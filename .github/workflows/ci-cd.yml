@@ -38,5 +38,7 @@ jobs:
       - name: Build Image and Deploy
         run: |
           docker build -t ghcr.io/cozyrim/community-frontend:latest .
+          # 기존에 충돌할 수 있는 컨테이너가 있다면 삭제 (강제)
+          docker rm -f community-frontend || true
           docker compose -p community up -d frontend
           docker system prune -f
