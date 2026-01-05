@@ -6,7 +6,7 @@ const DEFAULT_AVATAR_URL = '/images/avatar-default.png';
 if (typeof window !== 'undefined' && window.__ENV__) {
 window.CONFIG = {
     API_BASE_URL: window.__ENV__.API_BASE_URL || '/api/v1',
-    LAMBDA_UPLOAD_URL: window.__ENV__.LAMBDA_UPLOAD_URL || 'https://yw8frb7w1l.execute-api.ap-northeast-2.amazonaws.com/prod/upload'
+    LAMBDA_UPLOAD_URL: window.__ENV__.LAMBDA_UPLOAD_URL || '/api/v1/files/upload'
 };
 }
 

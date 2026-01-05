@@ -166,7 +166,7 @@ const authAPI = {
 // 사용자 API
 const userAPI = {
     signup: async (email, password, nickname, profileImageUrl = null) => {
-            // 프로필 사진이 있는 경우 s3에 업로드된 이미지 URL (문자열) 전송
+            // 프로필 사진이 있는 경우 업로드된 이미지 URL (문자열) 전송
             return apiCall('/users/signup', {
                 method: 'POST',
                 body: { email, password, nickname, profileImageUrl },
