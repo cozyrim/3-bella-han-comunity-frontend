@@ -37,6 +37,6 @@ jobs:
           path: .
       - name: Build Image and Deploy
         run: |
-          docker build -t community-frontend:latest .
+          docker build -t ghcr.io/cozyrim/community-frontend:latest .
           docker compose -p community up -d frontend
           docker system prune -f
