@@ -19,7 +19,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // 백엔드 API 서버(프록시 타깃)는 서버용 ENV로만 사용
-const API_PROXY_TARGET = process.env.API_BASE_URL || 'http://backend:8080';
+const API_PROXY_TARGET = process.env.API_BASE_URL || 'http://community-backend:8080';
 const STATIC_URL = process.env.STATIC_URL || '/uploads/';
 const LAMBDA_UPLOAD_URL = process.env.LAMBDA_UPLOAD_URL || '/api/v1/files/upload';
 
